@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="最近做 cmu15445 project2 实现 B+ Tree，有一个操作涉及到将一个从 buffer_pool_manager 获取的缓存页通过 reinterpret_cast直接转成一个类对象指针，并调用了其成员函数。第一次见这样的操作还挺无法理解的，因为这相当于将一段全为 0 的内存直接当作一个类对象去访问，听起来感觉很离经叛道，毕竟这个对象根本没有初始化过。顿感对 c++ 对象模型的了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浅浅探究一下c++对象内存模型">
+<meta property="og:url" content="http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/index.html">
+<meta property="og:site_name" content="Welcome to ZR&#39;s blog">
+<meta property="og:description" content="最近做 cmu15445 project2 实现 B+ Tree，有一个操作涉及到将一个从 buffer_pool_manager 获取的缓存页通过 reinterpret_cast直接转成一个类对象指针，并调用了其成员函数。第一次见这样的操作还挺无法理解的，因为这相当于将一段全为 0 的内存直接当作一个类对象去访问，听起来感觉很离经叛道，毕竟这个对象根本没有初始化过。顿感对 c++ 对象模型的了">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/pic/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/p1.jpg">
+<meta property="article:published_time" content="2023-09-18T14:50:31.000Z">
+<meta property="article:modified_time" content="2023-09-18T16:28:40.914Z">
+<meta property="article:author" content="ZR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/pic/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/p1.jpg">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>浅浅探究一下c++对象内存模型</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/09/18/std-vector%E5%92%8Cstd-list%E7%9A%84%E8%BF%AD%E4%BB%A3%E5%99%A8%E4%BD%95%E6%97%B6%E5%A4%B1%E6%95%88%E9%97%AE%E9%A2%98/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&text=浅浅探究一下c++对象内存模型"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&title=浅浅探究一下c++对象内存模型"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&is_video=false&description=浅浅探究一下c++对象内存模型"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=浅浅探究一下c++对象内存模型&body=Check out this article: http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&title=浅浅探究一下c++对象内存模型"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&title=浅浅探究一下c++对象内存模型"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&title=浅浅探究一下c++对象内存模型"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&title=浅浅探究一下c++对象内存模型"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&name=浅浅探究一下c++对象内存模型&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&t=浅浅探究一下c++对象内存模型"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        浅浅探究一下c++对象内存模型
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">ZR</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-09-18T14:50:31.000Z" class="dt-published" itemprop="datePublished">2023-09-18</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/c/">c++</a>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>最近做 cmu15445 project2 实现 B+ Tree，有一个操作涉及到将一个从 buffer_pool_manager 获取的缓存页通过 <code>reinterpret_cast</code>直接转成一个类对象指针，并调用了其成员函数。第一次见这样的操作还挺无法理解的，因为这相当于将一段全为 0 的内存直接当作一个类对象去访问，听起来感觉很离经叛道，毕竟这个对象根本没有初始化过。顿感对 c++ 对象模型的了解太少，于是查了一些资料。更深入的细节还是得系统地看看 《深度探索c++对象模型》。</p>
+<p>例子：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">()</span> </span>&#123;</span><br><span class="line">       std::cout &lt;&lt; <span class="keyword">this</span> &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; <span class="string">&quot;Base::print()&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">sPrint</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Base::sPrint()&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">virtualPrint</span><span class="params">()</span> </span>&#123;</span><br><span class="line">       std::cout &lt;&lt; <span class="string">&quot;Base::virtualPrint()&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">char</span> x;</span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> s;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> Base::s = <span class="number">10</span>;</span><br></pre></td></tr></table></figure>
+
+<p>内存模型如下：</p>
+<p><img src="/pic/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/p1.jpg" alt="p1"></p>
+<p>占用类对象内存的只有虚函数表指针和非静态成员变量，非虚成员函数的存储其实和普通函数相同，都是存储在代码区，其地址在编译期已经确定，只不过调用时额外传入 this 指针作参数罢了。静态成员变量在全局区，不占用对象空间。所以对象没有初始化对于调用非虚成员函数，静态成员函数，访问静态成员变量没有影响。测试如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="built_in">sizeof</span>(Base) &lt;&lt; std::endl;</span><br><span class="line">    <span class="type">char</span> data[<span class="number">16</span>];</span><br><span class="line"></span><br><span class="line">    Base* b = <span class="built_in">reinterpret_cast</span>&lt;Base*&gt;(data);</span><br><span class="line">    cout &lt;&lt; b &lt;&lt; endl;</span><br><span class="line">    <span class="comment">// b指向未初始化的内存，但不影响以下操作</span></span><br><span class="line">    b-&gt;<span class="built_in">print</span>();</span><br><span class="line">    b-&gt;<span class="built_in">sPrint</span>();</span><br><span class="line">    cout &lt;&lt; b-&gt;s &lt;&lt; endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">16</span><br><span class="line">0x7fff03157d00</span><br><span class="line">0x7fff03157d00 Base::<span class="built_in">print</span>()</span><br><span class="line">Base::sPrint()</span><br><span class="line">10</span><br></pre></td></tr></table></figure>
+
+<p>但是如果调用 <code>b-&gt;virtualPrint()</code>就会崩溃，因为要访问虚函数表，而虚函数表指针的内存没有初始化过。但是我们可以“组装”一个带虚函数的对象出来：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">hack</span><span class="params">(Base* b)</span> </span>&#123;</span><br><span class="line">    cout &lt;&lt; b &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; <span class="string">&quot;hack()&quot;</span> &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; b-&gt;x &lt;&lt; endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="built_in">sizeof</span>(Base) &lt;&lt; std::endl;</span><br><span class="line">    <span class="type">char</span> data[<span class="number">16</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// “组装”虚函数表</span></span><br><span class="line">    <span class="type">void</span>* vtbl[] = &#123;<span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(hack)&#125;;</span><br><span class="line">    <span class="type">void</span>* vtbl_ptr = &amp;vtbl;</span><br><span class="line">    <span class="built_in">memcpy</span>(data, &amp;vtbl_ptr, <span class="number">8</span>);</span><br><span class="line">    data[<span class="number">8</span>] = <span class="string">&#x27;A&#x27;</span>;</span><br><span class="line"></span><br><span class="line">    Base* b = <span class="built_in">reinterpret_cast</span>&lt;Base*&gt;(data);</span><br><span class="line">    cout &lt;&lt; b &lt;&lt; endl;</span><br><span class="line">    b-&gt;<span class="built_in">print</span>();</span><br><span class="line">    b-&gt;<span class="built_in">sPrint</span>();</span><br><span class="line">    cout &lt;&lt; b-&gt;s &lt;&lt; endl;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; endl;</span><br><span class="line">    b-&gt;<span class="built_in">virtualPrint</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">16</span><br><span class="line">0x7ffdc5d2b670</span><br><span class="line">0x7ffdc5d2b670 Base::<span class="built_in">print</span>()</span><br><span class="line">Base::sPrint()</span><br><span class="line">10</span><br><span class="line"></span><br><span class="line">0x7ffdc5d2b670 hack()</span><br><span class="line">A</span><br></pre></td></tr></table></figure>
+
+<p>hhh还挺有意思的。</p>
+<p>更复杂的继承以及多继承、虚继承下的内存模型暂时还不了解，以后有空再更新吧。</p>
+<p><strong>参考链接：</strong></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/QG-whz/p/4909359.html">https://www.cnblogs.com/QG-whz/p/4909359.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/luolaihua2018/article/details/110736211">https://blog.csdn.net/luolaihua2018/article/details/110736211</a></li>
+</ul>
+<p><strong>一个很好用的画图网页：</strong> <a target="_blank" rel="noopener" href="https://visionon.cn/clipboard">VisionOn</a></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a href="/categories/">Categories</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&text=浅浅探究一下c++对象内存模型"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&title=浅浅探究一下c++对象内存模型"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&is_video=false&description=浅浅探究一下c++对象内存模型"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=浅浅探究一下c++对象内存模型&body=Check out this article: http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&title=浅浅探究一下c++对象内存模型"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&title=浅浅探究一下c++对象内存模型"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&title=浅浅探究一下c++对象内存模型"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&title=浅浅探究一下c++对象内存模型"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&name=浅浅探究一下c++对象内存模型&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/&t=浅浅探究一下c++对象内存模型"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2023
+    ZR
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
