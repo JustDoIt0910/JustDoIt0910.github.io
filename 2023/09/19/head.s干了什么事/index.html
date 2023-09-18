@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="head.s 执行前的内存布局如下所示，此时 head.s 和操作系统剩余部分的代码被移动到物理地址 0 到 0x80000 处，0x90000 处存放着 setup.s 中获取的一些设备信息，过后要用到。0x90020 开始是 setup.s 的代码和数据，里面包括之前设置的临时 idt 和 gdt，此时 cpu 中的 idtr，gdtr 寄存器指向之前的临时 idt 和 gdt。 123456">
+<meta property="og:type" content="article">
+<meta property="og:title" content="head.s干了什么事">
+<meta property="og:url" content="http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/index.html">
+<meta property="og:site_name" content="Welcome to ZR&#39;s blog">
+<meta property="og:description" content="head.s 执行前的内存布局如下所示，此时 head.s 和操作系统剩余部分的代码被移动到物理地址 0 到 0x80000 处，0x90000 处存放着 setup.s 中获取的一些设备信息，过后要用到。0x90020 开始是 setup.s 的代码和数据，里面包括之前设置的临时 idt 和 gdt，此时 cpu 中的 idtr，gdtr 寄存器指向之前的临时 idt 和 gdt。 123456">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-09-18T16:43:13.000Z">
+<meta property="article:modified_time" content="2023-09-18T16:46:29.180Z">
+<meta property="article:author" content="ZR">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>head.s干了什么事</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/09/18/%E6%B5%85%E6%B5%85%E6%8E%A2%E7%A9%B6%E4%B8%80%E4%B8%8Bc++%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&text=head.s干了什么事"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&title=head.s干了什么事"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&is_video=false&description=head.s干了什么事"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=head.s干了什么事&body=Check out this article: http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&title=head.s干了什么事"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&title=head.s干了什么事"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&title=head.s干了什么事"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&title=head.s干了什么事"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&name=head.s干了什么事&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&t=head.s干了什么事"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        head.s干了什么事
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">ZR</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-09-18T16:43:13.000Z" class="dt-published" itemprop="datePublished">2023-09-19</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/linux0-11%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">linux0.11源码学习笔记</a>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>head.s 执行前的内存布局如下所示，此时 head.s 和操作系统剩余部分的代码被移动到物理地址 0 到 0x80000 处，0x90000 处存放着 setup.s 中获取的一些设备信息，过后要用到。0x90020 开始是 setup.s 的代码和数据，里面包括之前设置的临时 idt 和 gdt，此时 cpu 中的 idtr，gdtr 寄存器指向之前的临时 idt 和 gdt。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">        +------------------+</span><br><span class="line">        |                  |</span><br><span class="line">        |                  |</span><br><span class="line">        +------------------+                 +-----------+</span><br><span class="line">        |              idt &lt;--------------+  |           |</span><br><span class="line">        |  setup           |              |  | +-------+ |</span><br><span class="line">        |              gdt &lt;----------+   +----+ idtr  | |</span><br><span class="line">        |                  |          |      | +-------+ |</span><br><span class="line"><span class="number">0x90020</span> +------------------+          +--------+ gdtr  | |</span><br><span class="line">        |                  |                 | +-------+ |</span><br><span class="line">        |                  |                 |           |</span><br><span class="line">        +------------------+                 +-----------+</span><br><span class="line">        |临时存放的变量     |                      CPU</span><br><span class="line"><span class="number">0x90000</span> +------------------+</span><br><span class="line">        |                  |</span><br><span class="line"><span class="number">0x80000</span> +------------------+</span><br><span class="line">        |                  |</span><br><span class="line">        |system(操作系统全 |</span><br><span class="line">        |部代码)           |</span><br><span class="line">        |                  |</span><br><span class="line">      <span class="number">0</span> +------------------+</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>进入head.s</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">pg_dir:</span><br><span class="line">.globl startup_32</span><br><span class="line">startup_32:</span><br><span class="line">	movl $0x10,%eax</span><br></pre></td></tr></table></figure>
+
+<p>pg_dir是页目录，位于物理地址 0 处，后面的代码在之后会被页目录的内容覆盖，但是那时这段代码已经执行完毕，所以无所谓。首先把 0x10 赋值给 eax。0x10 对应的段选择符如下，TI &#x3D; 0表示在 gdt 中，请求特权级为 0，gdt 中的第二个描述符对应的是之前 setup.s 中临时设置的数据段描述符。 </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"> 描述符索引=<span class="number">2</span>     TI RPL</span><br><span class="line">+-----------------------+</span><br><span class="line">|<span class="number">0000</span> <span class="number">0000</span> <span class="number">0001</span> <span class="number">0</span>| <span class="number">0</span>| <span class="number">00</span>|</span><br><span class="line">+-----------------------+</span><br></pre></td></tr></table></figure>
+
+<p>之后使用 0x10 加载 ds, es, fs, gs 四个数据段寄存器，使用 stack_start 加载 ss 和 esp。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mov %ax,%ds</span><br><span class="line">mov %ax,%es</span><br><span class="line">mov %ax,%fs</span><br><span class="line">mov %ax,%gs</span><br><span class="line">lss stack_start,%esp</span><br></pre></td></tr></table></figure>
+
+<p>stack_start 定义在 sched.c 中，是一个48位的长指针。低4字节是 user_stack 的末端地址，高2字节 0x10 是数据段的段选择符。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">long</span> user_stack [ PAGE_SIZE&gt;&gt;<span class="number">2</span> ] ;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">	<span class="type">long</span> * a;</span><br><span class="line">	<span class="type">short</span> b;</span><br><span class="line">&#125; stack_start = &#123; &amp; user_stack [PAGE_SIZE&gt;&gt;<span class="number">2</span>] , <span class="number">0x10</span> &#125;;</span><br></pre></td></tr></table></figure>
+
+<p>LSS 指令的作用是从源操作数指定的内存中加载一个32位或48位的长指针到 ss:目的操作数指定的寄存器中，在这里就是 ss:esp 中。</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Instruction</th>
+<th>Op&#x2F;En</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0F B2 &#x2F;r</td>
+<td>LSS r16,m16:16</td>
+<td>RM</td>
+<td>Load SS:r16 with far pointer from memory.</td>
+</tr>
+<tr>
+<td>0F B2 &#x2F;r</td>
+<td>LSS r32,m16:32</td>
+<td>RM</td>
+<td>Load SS:r32 with far pointer from memory.</td>
+</tr>
+<tr>
+<td>REX + 0F B2 &#x2F;r</td>
+<td>LSS r64,m16:64</td>
+<td>RM</td>
+<td>Load SS:r64 with far pointer from memory.</td>
+</tr>
+</tbody></table>
+<p>所以 lss stack_start,%esp 的作用就是将 stack_start 处的低32位，也就是 user_stack 的末端地址赋值给 esp，并将 stack_start 的高16字节，也就是数据段的段选择符赋值给 ss 寄存器。从而将 user_stack 设置为当前使用的栈。</p>
+<p>接下来重新设置 idt 和 gdt。因为原先在 setup.s 中的 idt 和 gdt 之后会被缓冲区覆盖掉，所以肯定要把 idt 和 gdt 挪到 system 部分。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">call setup_idt</span><br><span class="line">call setup_gdt</span><br></pre></td></tr></table></figure>
+
+<p>先来看 setup_idt，ignore_int 是个只输出错误信息的哑中断子程序，setup_idt 让 idt 中的256个中断描述符都指向 ignore_int。其中 2~5 行是将要设置的中断门内容填充到 eax 和 ebx 中，其中 eax 存放着低4字节，ebx 存放着高4字节。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">setup_idt:</span><br><span class="line">	lea ignore_int,%edx</span><br><span class="line">	movl $0x00080000,%eax</span><br><span class="line">	movw %dx,%ax		/* selector = 0x0008 = cs */</span><br><span class="line">	movw $0x8E00,%dx	/* interrupt gate - dpl=0, present */</span><br><span class="line"></span><br><span class="line">	lea idt,%edi</span><br><span class="line">	mov $256,%ecx</span><br><span class="line">rp_sidt:</span><br><span class="line">	movl %eax,(%edi)</span><br><span class="line">	movl %edx,4(%edi)</span><br><span class="line">	addl $8,%edi</span><br><span class="line">	dec %ecx</span><br><span class="line">	jne rp_sidt</span><br><span class="line">	lidt idt_descr</span><br><span class="line">	ret</span><br></pre></td></tr></table></figure>
+
+<p>中断门格式如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">31</span>                             <span class="number">15</span> <span class="number">14</span> <span class="number">13</span> <span class="number">12</span>       <span class="number">5</span> <span class="number">4</span>     <span class="number">0</span></span><br><span class="line">+-----------------------------+--+-----+----------+--------+</span><br><span class="line">|     过程入口点偏移 <span class="number">31.</span>.<span class="number">.16</span>    | P| DPL | <span class="number">01110000</span> |       |</span><br><span class="line">+-----------------------------+--+-----+----------+--------+</span><br><span class="line"><span class="number">31</span>                         <span class="number">16</span> <span class="number">15</span>                          <span class="number">0</span></span><br><span class="line">+----------------------------+-----------------------------+</span><br><span class="line">|         段选择符            |    过程入口点偏移 <span class="number">0.</span>.<span class="number">.15</span>     |</span><br><span class="line">+----------------------------+-----------------------------+</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>2~5 行执行完后 eax 和 ebx 的内容如下，可以和上面的中断门格式对应上</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">                             P DPL</span><br><span class="line">     +----------------------+---------------------+</span><br><span class="line">ebx: | ignore_int 地址高<span class="number">16</span>位 |<span class="number">1</span>| <span class="number">00</span> |<span class="number">01110000</span>|<span class="number">00000</span>|</span><br><span class="line">     +----------------------+---------------------+</span><br><span class="line">          段选择符(代码段)</span><br><span class="line">     +---------------------+----------------------+</span><br><span class="line">eax: |      <span class="number">0x0008</span>         | ignore_int 地址低<span class="number">16</span>位 |</span><br><span class="line">     +---------------------+----------------------+</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>然后让 edi 指向 idt 表第一项，循环256次，依次填充 idt 表的每一项。因为一个中断门8个字节，所以每次循环 edi + 8，指向表中下一项。最后 lidt 指令加载 idtr 寄存器。</p>
+<p>setup_gdt 非常简单，直接用 lgdt 指令加载 gdtr 寄存器，因为 gdt 的内容已经硬编码好了，第一项是空描述符，第二项是代码段描述符，第三项是数据段描述符，后面还预留了 252 个空项，用于之后的 LDT 和 TSS。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">setup_gdt:</span><br><span class="line">	lgdt gdt_descr</span><br><span class="line">	ret</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">.align 2</span><br><span class="line">.word 0</span><br><span class="line">idt_descr:</span><br><span class="line">	.word 256*8-1		# idt contains 256 entries</span><br><span class="line">	.long idt</span><br><span class="line">.align 2</span><br><span class="line">.word 0</span><br><span class="line">gdt_descr:</span><br><span class="line">	.word 256*8-1		# so does gdt (not that that&#x27;s any</span><br><span class="line">	.long gdt		    # magic number, but it works for me :^)</span><br><span class="line"></span><br><span class="line">	.align 8</span><br><span class="line">idt:	.fill 256,8,0		# idt is uninitialized</span><br><span class="line"></span><br><span class="line">gdt:	.quad 0x0000000000000000	/* NULL descriptor */</span><br><span class="line">	.quad 0x00c09a0000000fff	/* 16Mb */ /* 00000000 11000000 10011010 00000000 00000000 00000000 										   00001111 11111111 */</span><br><span class="line">	.quad 0x00c0920000000fff	/* 16Mb */ /* 00000000 11000000 10010010 00000000 00000000 00000000 										   00001111 11111111 */</span><br><span class="line">	.quad 0x0000000000000000	/* TEMPORARY - don&#x27;t use */</span><br><span class="line">	.fill 252,8,0			/* space for LDT&#x27;s and TSS&#x27;s etc */</span><br></pre></td></tr></table></figure>
+
+<p>在重新设置 gdt 后要重新加载各个段寄存器：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">movl $0x10,%eax		# reload all the segment registers</span><br><span class="line">mov %ax,%ds		# after changing gdt. CS was already</span><br><span class="line">mov %ax,%es		# reloaded in &#x27;setup_gdt&#x27;</span><br><span class="line">mov %ax,%fs</span><br><span class="line">mov %ax,%gs</span><br><span class="line">lss stack_start,%esp</span><br></pre></td></tr></table></figure>
+
+<p>后面的代码检测了 A20 是否开启，检测数学协处理器，这些历史包袱问题不重要所以没有细看，重要的是后面的 after_page_tables。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">	xorl %eax,%eax</span><br><span class="line">1:	incl %eax		# check that A20 really IS enabled</span><br><span class="line">	movl %eax,0x000000	# loop forever if it isn&#x27;t</span><br><span class="line">	cmpl %eax,0x100000</span><br><span class="line">	je 1b</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line"> * NOTE! 486 should set bit 16, to check for write-protect in supervisor</span><br><span class="line"> * mode. Then it would be unnecessary with the &quot;verify_area()&quot;-calls.</span><br><span class="line"> * 486 users probably want to set the NE (#5) bit also, so as to use</span><br><span class="line"> * int 16 for math errors.</span><br><span class="line"> */</span><br><span class="line">	movl %cr0,%eax		# check math chip</span><br><span class="line">	andl $0x80000011,%eax	# Save PG,PE,ET</span><br><span class="line">/* &quot;orl $0x10020,%eax&quot; here for 486 might be good */</span><br><span class="line">	orl $2,%eax		# set MP</span><br><span class="line">	movl %eax,%cr0</span><br><span class="line">	call check_x87</span><br><span class="line">	jmp after_page_tables</span><br></pre></td></tr></table></figure>
+
+<p>在 after_page_tables 中，先把 main 函数参数压栈，然后是 main 的返回地址 L6，理论上 main 不应该返回，如果main 函数执行 ret 返回，会弹出并跳转到 L6 执行，这是个死循环。随后将 main 函数地址入栈，当 setup_paging 返回时，会弹出并跳转到 main 执行。</p>
+<p>这4张页表是内核专用页表，它们将映射线性地址空间的前 16MB 一一映射到 16MB 的物理空间。需要4张页表是因为页大小是 4KB，一个页表项是4字节，一张页表有 4KB &#x2F; 4 &#x3D; 1024 项，四张页表有4096项，能映射 4096 * 4KB &#x3D; 16MB 的物理内存。页目录项&#x2F;页表项格式如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"> <span class="number">31</span>         <span class="number">12</span> <span class="number">11</span> <span class="number">10</span> <span class="number">9</span> <span class="number">87</span> <span class="number">6</span> <span class="number">5</span> <span class="number">43</span>  <span class="number">2</span>   <span class="number">1</span>  <span class="number">0</span></span><br><span class="line">+-------------+---------------------------+</span><br><span class="line">|   页帧地址   |  AVL  |<span class="number">00</span>|D|A|<span class="number">00</span>|U/S|R/W|P|</span><br><span class="line">+-------------+---------------------------+</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>P ：存在位，表示页面是否在内存中，还是已被换出</li>
+<li>R&#x2F;W ：读写位，1表示可读&#x2F;写&#x2F;执行，0表示可读&#x2F;执行</li>
+<li>U&#x2F;S：超级用户标志，为1时任何特权级都可访问，为0时只有特权级0，1，2可访问</li>
+<li>A：访问位</li>
+<li>D：脏位</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">/*</span><br><span class="line"> * I put the kernel page tables right after the page directory,</span><br><span class="line"> * using 4 of them to span 16 Mb of physical memory. People with</span><br><span class="line"> * more than 16MB will have to expand this.</span><br><span class="line"> */</span><br><span class="line">.org 0x1000</span><br><span class="line">pg0:</span><br><span class="line"></span><br><span class="line">.org 0x2000</span><br><span class="line">pg1:</span><br><span class="line"></span><br><span class="line">.org 0x3000</span><br><span class="line">pg2:</span><br><span class="line"></span><br><span class="line">.org 0x4000</span><br><span class="line">pg3:</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">after_page_tables:</span><br><span class="line">	pushl $0		# These are the parameters to main :-)</span><br><span class="line">	pushl $0</span><br><span class="line">	pushl $0</span><br><span class="line">	pushl $L6		# return address for main, if it decides to.</span><br><span class="line">	pushl $main</span><br><span class="line">	jmp setup_paging</span><br><span class="line">L6:</span><br><span class="line">	jmp L6			# main should never return here, but</span><br><span class="line">				# just in case, we know what happens.</span><br></pre></td></tr></table></figure>
+
+<p>接下来是最重要的初始化页目录和内核页表的代码。2~5 行代码将页目录和4张页表所在内存清零。这里使用带 rep 前缀的 stosl 字符串操作指令。首先将循环次数存入 ecx，将 eax, edi 置零。cld 指令作用是将 EFLAGS 寄存器的 DF 标志清零。当 DF 标志位为0时，在字符串操作指令中 esi, edi 变址寄存器是自增方向，否则是自减方向。stosl 指令单独使用的话是将 eax  的值存入 es:edi 指向的内存地址中，当结合 rep 前缀使用时，重复次数由 ecx 的值指定。(比较奇怪的是我在 Intel 手册中没有找到 stosl 指令，只有 stos, stosb, stosw, stosd, stosq)。这里重复次数之所以是 1024 * 5 是因为一个页表项&#x2F;页目录项是4字节，stosl 操作数也是4字节，而页目录&#x2F;页表大小都是 4KB，包含 4KB &#x2F; 4 &#x3D; 1024 个页目录项&#x2F;页表项，所以清零一个页目录&#x2F;页表需要循环1024次，这里有一个页目录 + 4张页表，需要 1024 * 5 次循环。</p>
+<p>第 6~9 行设置页目录。每个页目录项初始化为 ADDR(pgn) + 7，也就是存在位为1，可读&#x2F;写&#x2F;执行，任何特权级可访问。(暂时不明白这里为什么设置成允许任何特权级访问)。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">setup_paging:</span><br><span class="line">	movl $1024*5,%ecx		/* 5 pages - pg_dir+4 page tables */</span><br><span class="line">	xorl %eax,%eax</span><br><span class="line">	xorl %edi,%edi			/* pg_dir is at 0x000 */</span><br><span class="line">	cld;rep;stosl</span><br><span class="line">	movl $pg0+7,pg_dir		/* set present bit/user r/w */</span><br><span class="line">	movl $pg1+7,pg_dir+4		/*  --------- &quot; &quot; --------- */</span><br><span class="line">	movl $pg2+7,pg_dir+8		/*  --------- &quot; &quot; --------- */</span><br><span class="line">	movl $pg3+7,pg_dir+12		/*  --------- &quot; &quot; --------- */</span><br><span class="line">	movl $pg3+4092,%edi</span><br><span class="line">	movl $0xfff007,%eax		/*  16Mb - 4096 + 7 (r/w user,p) */</span><br><span class="line">	std</span><br><span class="line">1:	stosl			/* fill pages backwards - more efficient :-) */</span><br><span class="line">	subl $0x1000,%eax</span><br><span class="line">	jge 1b</span><br><span class="line">	xorl %eax,%eax		/* pg_dir is at 0x0000 */</span><br><span class="line">	movl %eax,%cr3		/* cr3 - page directory start */</span><br><span class="line">	movl %cr0,%eax</span><br><span class="line">	orl $0x80000000,%eax</span><br><span class="line">	movl %eax,%cr0		/* set paging (PG) bit */</span><br><span class="line">	ret			/* this also flushes prefetch-queue */</span><br></pre></td></tr></table></figure>
+
+
+
+<p>未完待续……</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a href="/categories/">Categories</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&text=head.s干了什么事"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&title=head.s干了什么事"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&is_video=false&description=head.s干了什么事"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=head.s干了什么事&body=Check out this article: http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&title=head.s干了什么事"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&title=head.s干了什么事"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&title=head.s干了什么事"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&title=head.s干了什么事"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&name=head.s干了什么事&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/&t=head.s干了什么事"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2023
+    ZR
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
