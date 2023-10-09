@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="给定节点数，求平衡二叉树最大高度的问题，和给定高度，求最少节点数的问题是等价的。给定节点数，当所有节点平衡因子为 ±1 时树最高，给定高度，当所有节点平衡因子为 ±1 时节点最少。下面时平衡因子为 1 的情况，让每个节点的左子树尽可能高：  若记 N(h) 为高度为 h 时的最小节点数，则可以得出递推关系 N(1) &#x3D; 1, N(2) &#x3D; 2, N(h) &#x3D; N(h">
+<meta property="og:type" content="article">
+<meta property="og:title" content="平衡二叉树最大深度问题">
+<meta property="og:url" content="http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="Welcome to ZR&#39;s blog">
+<meta property="og:description" content="给定节点数，求平衡二叉树最大高度的问题，和给定高度，求最少节点数的问题是等价的。给定节点数，当所有节点平衡因子为 ±1 时树最高，给定高度，当所有节点平衡因子为 ±1 时节点最少。下面时平衡因子为 1 的情况，让每个节点的左子树尽可能高：  若记 N(h) 为高度为 h 时的最小节点数，则可以得出递推关系 N(1) &#x3D; 1, N(2) &#x3D; 2, N(h) &#x3D; N(h">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/pic/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/p1.png">
+<meta property="article:published_time" content="2023-10-09T14:39:10.000Z">
+<meta property="article:modified_time" content="2023-10-09T15:29:04.677Z">
+<meta property="article:author" content="ZR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/pic/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/p1.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>平衡二叉树最大深度问题</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/09/19/head.s%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88%E4%BA%8B/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&text=平衡二叉树最大深度问题"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&title=平衡二叉树最大深度问题"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&is_video=false&description=平衡二叉树最大深度问题"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=平衡二叉树最大深度问题&body=Check out this article: http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&title=平衡二叉树最大深度问题"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&title=平衡二叉树最大深度问题"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&title=平衡二叉树最大深度问题"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&title=平衡二叉树最大深度问题"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&name=平衡二叉树最大深度问题&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&t=平衡二叉树最大深度问题"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        平衡二叉树最大深度问题
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">ZR</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-10-09T14:39:10.000Z" class="dt-published" itemprop="datePublished">2023-10-09</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">数据结构和算法</a>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>给定节点数，求平衡二叉树最大高度的问题，和给定高度，求最少节点数的问题是等价的。给定节点数，当所有节点平衡因子为 ±1 时树最高，给定高度，当所有节点平衡因子为 ±1 时节点最少。下面时平衡因子为 1 的情况，让每个节点的左子树尽可能高：</p>
+<p><img src="/pic/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/p1.png"></p>
+<p>若记 N(h) 为高度为 h 时的最小节点数，则可以得出递推关系 <strong>N(1) &#x3D; 1, N(2) &#x3D; 2, N(h) &#x3D; N(h - 1) + N(h - 2) + 1</strong></p>
+<table>
+<thead>
+<tr>
+<th align="left">高度</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>最小节点数</strong></td>
+<td>1</td>
+<td>2</td>
+<td>4</td>
+<td>7</td>
+<td>12</td>
+<td>20</td>
+<td>33</td>
+</tr>
+</tbody></table>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a href="/categories/">Categories</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&text=平衡二叉树最大深度问题"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&title=平衡二叉树最大深度问题"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&is_video=false&description=平衡二叉树最大深度问题"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=平衡二叉树最大深度问题&body=Check out this article: http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&title=平衡二叉树最大深度问题"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&title=平衡二叉树最大深度问题"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&title=平衡二叉树最大深度问题"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&title=平衡二叉树最大深度问题"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&name=平衡二叉树最大深度问题&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/&t=平衡二叉树最大深度问题"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2023
+    ZR
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
