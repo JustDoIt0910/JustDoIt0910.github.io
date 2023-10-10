@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="最近复习 408 的时候对补码和反码的本质有了新的理解，整理记录一下。或许有错误或者不严谨之处，留给日后修正。下面是一些对补码和反码新的认知：  补码和反码在计算机看来，根本没有符号位这个概念，换句话说从计算机的视角看，补码和反码都是正数。 补码和反码能够出现，有一个大前提，就是今天的计算机所使用的计量系统是基于模运算的，具体表现就是使用有限的二进制位数去表示一个数，所以每一个加减运算都有一个隐式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对于补码和反码本质的理解">
+<meta property="og:url" content="http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/index.html">
+<meta property="og:site_name" content="Welcome to ZR&#39;s blog">
+<meta property="og:description" content="最近复习 408 的时候对补码和反码的本质有了新的理解，整理记录一下。或许有错误或者不严谨之处，留给日后修正。下面是一些对补码和反码新的认知：  补码和反码在计算机看来，根本没有符号位这个概念，换句话说从计算机的视角看，补码和反码都是正数。 补码和反码能够出现，有一个大前提，就是今天的计算机所使用的计量系统是基于模运算的，具体表现就是使用有限的二进制位数去表示一个数，所以每一个加减运算都有一个隐式">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/pic/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/p1.jpg">
+<meta property="og:image" content="http://example.com/pic/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/p2.jpg">
+<meta property="og:image" content="http://example.com/pic/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/p3.jpg">
+<meta property="article:published_time" content="2023-10-10T14:22:41.000Z">
+<meta property="article:modified_time" content="2023-10-10T23:03:21.943Z">
+<meta property="article:author" content="ZR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/pic/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/p1.jpg">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>对于补码和反码本质的理解</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/10/10/%E6%A8%A12%E9%99%A4%E6%B3%95%E5%92%8CCRC/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&text=对于补码和反码本质的理解"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&title=对于补码和反码本质的理解"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&is_video=false&description=对于补码和反码本质的理解"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=对于补码和反码本质的理解&body=Check out this article: http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&title=对于补码和反码本质的理解"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&title=对于补码和反码本质的理解"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&title=对于补码和反码本质的理解"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&title=对于补码和反码本质的理解"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&name=对于补码和反码本质的理解&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&t=对于补码和反码本质的理解"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E4%BA%8E%E8%A1%A5%E6%95%B0"><span class="toc-number">1.</span> <span class="toc-text">关于补数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%A5%E6%95%B0%E5%92%8C%E5%90%8C%E4%BD%99%E5%AE%9A%E7%90%86"><span class="toc-number">2.</span> <span class="toc-text">补数和同余定理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E8%A1%A5%E7%A0%81%E5%BA%94%E7%94%A8%E4%BA%8E%E8%AE%A1%E7%AE%97%E6%9C%BA"><span class="toc-number">3.</span> <span class="toc-text">将补码应用于计算机</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8F%8D%E7%A0%81%E5%AD%98%E5%9C%A8%E7%BC%BA%E9%99%B7"><span class="toc-number">4.</span> <span class="toc-text">为什么反码存在缺陷</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        对于补码和反码本质的理解
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">ZR</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-10-10T14:22:41.000Z" class="dt-published" itemprop="datePublished">2023-10-10</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90%E5%8E%9F%E7%90%86/">计算机组成原理</a>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>最近复习 408 的时候对补码和反码的本质有了新的理解，整理记录一下。或许有错误或者不严谨之处，留给日后修正。下面是一些对补码和反码新的认知：</p>
+<ul>
+<li>补码和反码在计算机看来，根本没有符号位这个概念，换句话说从计算机的视角看，补码和反码都是正数。</li>
+<li>补码和反码能够出现，有一个大前提，就是今天的计算机所使用的计量系统是基于模运算的，具体表现就是使用有限的二进制位数去表示一个数，所以每一个加减运算都有一个隐式的取模操作。对于补码来说就是丢弃最高位的进位，对于反码就稍微复杂一些，具体下面再说。</li>
+<li>反码的本质和补码相同，它们只是基于不同的模，可以说反码是有缺陷的补码(体现在 0 有两种编码，以及取模操作的不便上)。</li>
+</ul>
+<h3 id="关于补数"><a href="#关于补数" class="headerlink" title="关于补数"></a>关于补数</h3><p>众所周知计算机只能作加法，补码和反码都是一种补码，它们都是使用补数的概念来将减法变成加法。<strong>对于补数我的理解是若 a + b &#x3D; m, 则 a 和 b 互为补数，m 为这个计数系统的模。此时 (x - a) % m &#x3D; (x + b) % m，即在模m的情况下，减去一个数等于加上它的补数。</strong>举个例子，钟表就是以 12 为模的计数系统。现在时针指向 8 点，要让它指向 7 有两种选择：</p>
+<p><img src="/pic/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/p1.jpg" alt="p1"></p>
+<ul>
+<li>逆时针旋转 1，即 8 - 1 &#x3D; 7</li>
+<li>顺时针旋转 11，即 (8 + 11) % 12 &#x3D; 7，这里 11 即为 1 在模为 12 的计数系统下的补数。</li>
+</ul>
+<p>所以在钟表这个计数系统中，可以用 11 表示 -1。推广一下，在以 m 为模的计数系统里，要想消除负数或者说减法这个概念，可以将负数 x 用它绝对值的补数表示，即 [x]<sub>补</sub> &#x3D; m - |x| 或 [x]<sub>补</sub> &#x3D; m + x。[x]<sub>补</sub>就是所谓的补码了。于是我们得到了一个只用顺时针旋转就能实现加减的钟表，这不正是计算机需要的吗。</p>
+<h3 id="补数和同余定理"><a href="#补数和同余定理" class="headerlink" title="补数和同余定理"></a>补数和同余定理</h3><p>使用补码来表示负数的正确性来源于同余定理的支持。先补充一下同余定理：<strong>设 m 是大于1的正整数，a、b 是整数，如果 m | (a - b)，则称 a 与 b 关于模 m 同余，记作 a ≡ b (mod m)</strong></p>
+<p>同余性质：</p>
+<ol>
+<li><strong>反身性：a ≡ a (mod m)</strong></li>
+<li>对称性：若a ≡ b (mod m)，则b ≡ a (mod m)</li>
+<li>传递性：若a ≡ b (mod m)，b ≡ c (mod m)，则a ≡ c (mod m)</li>
+<li><strong>同余式相加：若a ≡ b (mod m)，c ≡ d (mod m)，则 a ± c ≡ b ± d (mod m)</strong></li>
+<li>同余式相乘：若a ≡ b (mod m)，c ≡ d (mod m)，则 ac ≡ bd (mod m)</li>
+</ol>
+<p>设 a &lt; 0，b 为 a 在以 m 为模的系统下的补码，即 b 是 |a| 的补数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">可得 |a| + b = m</span><br><span class="line">因为 a &lt; 0, 所以 b - a = m，由同余定理得 a ≡ b (mod m)</span><br><span class="line">由同余性质 1，3 可得 (x + a) % m = (x + b) % m</span><br><span class="line">即加上一个负数等价于加上它的补码</span><br></pre></td></tr></table></figure>
+
+<p>可见求一个负数的补码，等价于求它绝对值的补数，等价与求它的同余。</p>
+<h3 id="将补码应用于计算机"><a href="#将补码应用于计算机" class="headerlink" title="将补码应用于计算机"></a>将补码应用于计算机</h3><p>计算机领域里的 补码 (2 的补码) 使用的是以 2<sup>n</sup> 为模的系统，反码 (1 的补码) 使用的是以 2<sup>n</sup> - 1 为模的系统。这里 n 是数据的位数 (不区分符号位数值位，因为根本没有符号位这个东西)。引用 CSAPP 里的一段旁注：补码英语里是 Two’s complement，反码是 Ones’ complement，这里 2 是单数 1 是复数，原因是补码使用的模是  2<sup>n</sup>，只有一个 2，反码使用的模是  2<sup>n</sup>  - 1，是 [11…111] 共 n 个 1。所以感觉将补码翻译成 “对 2 求补”，反码翻译成 “对 1 求补” 更贴切一些。</p>
+<p>因此 2 的补码对负数 x 的定义是  [x]<sub>补</sub> &#x3D; 2<sup>n</sup> + x， 1 的补码对负数 x 的定义是  [x]<sub>反</sub> &#x3D; 2<sup>n</sup> - 1 + x。这也是为什么可以用反码加 1 来得到补码。</p>
+<p>由于使用 2 补码的系统在加减运算时将最高位进位直接丢弃，这就相当于对 2<sup>n</sup> 进行了一次取模操作，只不过是隐式的 (使用 1 的补码就会带来问题，下面再说)。至于为什么补码的符号位可以参与运算，个人认为这是个伪命题，因为二进制数本身没有正负，或者说都是正的，没有符号位数值位之分。例如 4 位的补码如图：</p>
+<p><img src="/pic/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/p2.jpg" alt="p2"></p>
+<p>计算机只能作加法，所以计算机对这些数只是执行简单的二进制加法而已，但是因为有模的存在，可以表现为在数轴上的回退。从补码的原理角度看，每个二进制数都有两个含义：+x 或 -(m - x)。如本例，对任意一个数执行二进制加法，可以理解成增加 x，也可以理解成减少 16 - x，反正对于计算机来说是等价的。所以每个二进制数都可以表示一个正数或负数，只是我们人为规定，最高位为 0 的二进制数，使用它的正数含义，最高位为 1 的数，使用它的负数含义。即选取图中绿色的数作为当前这个计数系统的表示范围。于是人们将最高位定为符号位，它只是一个人为的划分标志而已，本身就是数值的一部分。</p>
+<h3 id="为什么反码存在缺陷"><a href="#为什么反码存在缺陷" class="headerlink" title="为什么反码存在缺陷"></a>为什么反码存在缺陷</h3><p>反码以 2<sup>n</sup> - 1 作为模，那么 0(二进制全 0) 和 2<sup>n</sup> - 1 (二进制全 1) 这两个数互为补数，都表示 0，浪费了一个编码，使得计数系统容量变成了 2<sup>n</sup> - 1。更重要的是，反码的取模没法像补码那样直接舍弃高位，因为那相当于模 2<sup>n</sup>，而反码是以 2<sup>n</sup> - 1 为模的，所以当反码最高位出现进位时，需要将进位加到低位上。例如 3 - 2 &#x3D; 0011 + 1101 &#x3D; 0000 + 1 &#x3D; 0001。我是这样想的，因为模的是 2<sup>n</sup> - 1，所以当达到全 1 的时候就该归零了，下一次就要从 1 开始了，然而下次加 1 导致了进位，相当于这个加 1 被进位消耗掉了，所以需要在低位 + 1 修正。或者更直观的想法如图：</p>
+<p><img src="/pic/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/p3.jpg" alt="p3"></p>
+<p>当计算 a - b 时，相当于顺时针移动  2<sup>n</sup> - 1 - b (即 b 在以  2<sup>n</sup> - 1 为模的系统中的补数) 个单位，最高位出现进位说明越过了顶端的 1111，而由于 0000 也表示 0，所以越过顶端时有一步移动是无效的(从 -0 移到 +0)，所以需要再补偿一步进行修正。大概是因为这些缺陷导致反码没有广泛使用，但 ip，udp 报文的校验和用的是反码，好像是可以做到屏蔽大小端的差异，没有深究，它的计算过程中也需要进位回卷，我猜想是因为上述的原因。</p>
+<p><strong>参考链接</strong></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_45472866/article/details/114779170">https://blog.csdn.net/qq_45472866&#x2F;article&#x2F;details&#x2F;114779170</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/wu_nan_nan/article/details/54633506">https://blog.csdn.net/wu_nan_nan&#x2F;article&#x2F;details&#x2F;54633506</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/20458542/answer/40759880">https://www.zhihu.com/question/20458542/answer/40759880</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/codetravel/p/4361345.html">https://www.cnblogs.com/codetravel/p/4361345.html</a></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a href="/categories/">Categories</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E4%BA%8E%E8%A1%A5%E6%95%B0"><span class="toc-number">1.</span> <span class="toc-text">关于补数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%A5%E6%95%B0%E5%92%8C%E5%90%8C%E4%BD%99%E5%AE%9A%E7%90%86"><span class="toc-number">2.</span> <span class="toc-text">补数和同余定理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E8%A1%A5%E7%A0%81%E5%BA%94%E7%94%A8%E4%BA%8E%E8%AE%A1%E7%AE%97%E6%9C%BA"><span class="toc-number">3.</span> <span class="toc-text">将补码应用于计算机</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8F%8D%E7%A0%81%E5%AD%98%E5%9C%A8%E7%BC%BA%E9%99%B7"><span class="toc-number">4.</span> <span class="toc-text">为什么反码存在缺陷</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&text=对于补码和反码本质的理解"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&title=对于补码和反码本质的理解"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&is_video=false&description=对于补码和反码本质的理解"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=对于补码和反码本质的理解&body=Check out this article: http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&title=对于补码和反码本质的理解"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&title=对于补码和反码本质的理解"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&title=对于补码和反码本质的理解"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&title=对于补码和反码本质的理解"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&name=对于补码和反码本质的理解&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/10/%E5%AF%B9%E4%BA%8E%E8%A1%A5%E7%A0%81%E5%92%8C%E5%8F%8D%E7%A0%81%E6%9C%AC%E8%B4%A8%E7%9A%84%E7%90%86%E8%A7%A3/&t=对于补码和反码本质的理解"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2023
+    ZR
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
