@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="如图，求图中关键路径长度和经过的节点  首先源点 1 的事件最早发生时间为 0，然后按照拓扑排序的顺序，对于每一个节点 i，它的事件最早发生时间 D(i) &#x3D; max{D(pre) + weight(pre, i)}，即对于节点 i 的每个前驱节点 pre，计算 pre 的事件最早发生时间 + 有向边 &lt;pre, i&gt; 的权，取其中的最大值，即为节点 i 的事件最早发生时间，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="快速找到关键路径">
+<meta property="og:url" content="http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/index.html">
+<meta property="og:site_name" content="Welcome to ZR&#39;s blog">
+<meta property="og:description" content="如图，求图中关键路径长度和经过的节点  首先源点 1 的事件最早发生时间为 0，然后按照拓扑排序的顺序，对于每一个节点 i，它的事件最早发生时间 D(i) &#x3D; max{D(pre) + weight(pre, i)}，即对于节点 i 的每个前驱节点 pre，计算 pre 的事件最早发生时间 + 有向边 &lt;pre, i&gt; 的权，取其中的最大值，即为节点 i 的事件最早发生时间，">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/pic/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/p1.jpg">
+<meta property="og:image" content="http://example.com/pic/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/p2.jpg">
+<meta property="article:published_time" content="2023-10-10T07:46:22.000Z">
+<meta property="article:modified_time" content="2023-10-10T08:37:57.324Z">
+<meta property="article:author" content="ZR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/pic/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/p1.jpg">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>快速找到关键路径</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/10/09/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6%E9%97%AE%E9%A2%98/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&text=快速找到关键路径"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&title=快速找到关键路径"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&is_video=false&description=快速找到关键路径"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=快速找到关键路径&body=Check out this article: http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&title=快速找到关键路径"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&title=快速找到关键路径"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&title=快速找到关键路径"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&title=快速找到关键路径"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&name=快速找到关键路径&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&t=快速找到关键路径"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        快速找到关键路径
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">ZR</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-10-10T07:46:22.000Z" class="dt-published" itemprop="datePublished">2023-10-10</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">数据结构和算法</a>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>如图，求图中关键路径长度和经过的节点</p>
+<p><img src="/pic/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/p1.jpg" alt="p1"></p>
+<p>首先源点 1 的事件最早发生时间为 0，然后按照拓扑排序的顺序，对于每一个节点 i，它的事件最早发生时间 D(i) &#x3D; max{D(pre) + weight(pre, i)}，即对于节点 i 的每个前驱节点 pre，计算 pre 的事件最早发生时间 + 有向边 &lt;pre, i&gt; 的权，取其中的最大值，即为节点 i 的事件最早发生时间，对应的 pre 即为节点 i 在关键路径中的前驱，如果有多个相等的前驱，那说明图中有多条关键路径。计算到终点后，沿着记录的前驱就能逆向写出所有关键路径。</p>
+<p>对于上图，求解过程如下：</p>
+<table>
+<thead>
+<tr>
+<th>节点</th>
+<th>事件最早发生时间</th>
+<th>前驱</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td>5</td>
+<td>1</td>
+</tr>
+<tr>
+<td>3</td>
+<td>6</td>
+<td>1</td>
+</tr>
+<tr>
+<td>4</td>
+<td>9</td>
+<td>3</td>
+</tr>
+<tr>
+<td>5</td>
+<td>12</td>
+<td>3 &#x2F; 4</td>
+</tr>
+<tr>
+<td>6</td>
+<td>16</td>
+<td>5</td>
+</tr>
+<tr>
+<td>7</td>
+<td>14</td>
+<td>5</td>
+</tr>
+<tr>
+<td>8</td>
+<td>13</td>
+<td>4</td>
+</tr>
+<tr>
+<td>9</td>
+<td>19</td>
+<td>7</td>
+</tr>
+<tr>
+<td>10</td>
+<td>21</td>
+<td>9</td>
+</tr>
+</tbody></table>
+<p><img src="/pic/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/p2.jpg" alt="p1"></p>
+<p>逆向写出关键路径：</p>
+<p><strong>1 -&gt; 3 -&gt; 4 -&gt; 5 -&gt; 7 -&gt; 9 -&gt; 10</strong></p>
+<p><strong>1 -&gt; 3 -&gt; 5 -&gt; 7 -&gt; 9 -&gt; 10</strong></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a href="/categories/">Categories</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&text=快速找到关键路径"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&title=快速找到关键路径"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&is_video=false&description=快速找到关键路径"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=快速找到关键路径&body=Check out this article: http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&title=快速找到关键路径"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&title=快速找到关键路径"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&title=快速找到关键路径"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&title=快速找到关键路径"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&name=快速找到关键路径&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/10/%E5%BF%AB%E9%80%9F%E6%89%BE%E5%88%B0%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84/&t=快速找到关键路径"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2023
+    ZR
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
