@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="由于想使用 protobuf 实现一个自己的 c++ RPC framework，可能需要编写 plugin 来完成一些自定义代码的生成，所以了解了一下 c++ plugin 的开发方法。网上这方面的资料几乎为0，只好去翻官方的 reference 了。 第一步：实现插件的 main 函数对应官网 plugin 中的内容。所需头文件 google&#x2F;protobuf&#x2F;compil">
+<meta property="og:type" content="article">
+<meta property="og:title" content="protobuf c++ 插件开发">
+<meta property="og:url" content="http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/index.html">
+<meta property="og:site_name" content="Welcome to ZR&#39;s blog">
+<meta property="og:description" content="由于想使用 protobuf 实现一个自己的 c++ RPC framework，可能需要编写 plugin 来完成一些自定义代码的生成，所以了解了一下 c++ plugin 的开发方法。网上这方面的资料几乎为0，只好去翻官方的 reference 了。 第一步：实现插件的 main 函数对应官网 plugin 中的内容。所需头文件 google&#x2F;protobuf&#x2F;compil">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-10-30T06:51:58.000Z">
+<meta property="article:modified_time" content="2023-10-30T10:16:56.360Z">
+<meta property="article:author" content="ZR">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>protobuf c++ 插件开发</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&text=protobuf c++ 插件开发"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&title=protobuf c++ 插件开发"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&is_video=false&description=protobuf c++ 插件开发"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=protobuf c++ 插件开发&body=Check out this article: http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&title=protobuf c++ 插件开发"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&title=protobuf c++ 插件开发"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&title=protobuf c++ 插件开发"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&title=protobuf c++ 插件开发"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&name=protobuf c++ 插件开发&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&t=protobuf c++ 插件开发"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E5%AE%9E%E7%8E%B0%E6%8F%92%E4%BB%B6%E7%9A%84-main-%E5%87%BD%E6%95%B0"><span class="toc-number">1.</span> <span class="toc-text">第一步：实现插件的 main 函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E8%87%AA%E5%AE%9A%E4%B9%89-CodeGenerator"><span class="toc-number">2.</span> <span class="toc-text">第二步：自定义 CodeGenerator</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AE%80%E5%8D%95-DEMO"><span class="toc-number">3.</span> <span class="toc-text">简单 DEMO</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B3%A8%EF%BC%9A%E6%8F%92%E4%BB%B6%E9%93%BE%E6%8E%A5%E7%9A%84%E6%97%B6%E5%80%99%E8%A6%81%E9%93%BE%E6%8E%A5-libprotoc%EF%BC%8C%E8%80%8C%E6%99%AE%E9%80%9A%E7%9A%84%E4%BD%BF%E7%94%A8-protobuf-%E7%9A%84%E7%A8%8B%E5%BA%8F%E4%B8%8D%E9%9C%80%E8%A6%81%E3%80%82%E8%80%8C%E4%B8%94-libprotoc-%E8%A6%81%E6%9C%80%E5%85%88%E9%93%BE%E6%8E%A5%EF%BC%8CCMakeList-%E5%A6%82%E4%B8%8B%EF%BC%9A"><span class="toc-number">4.</span> <span class="toc-text">注：插件链接的时候要链接 libprotoc，而普通的使用 protobuf 的程序不需要。而且 libprotoc 要最先链接，CMakeList 如下：</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        protobuf c++ 插件开发
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">ZR</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-10-30T06:51:58.000Z" class="dt-published" itemprop="datePublished">2023-10-30</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/protobuf/">protobuf</a>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>由于想使用 protobuf 实现一个自己的 c++ RPC framework，可能需要编写 plugin 来完成一些自定义代码的生成，所以了解了一下 c++ plugin 的开发方法。网上这方面的资料几乎为0，只好去翻官方的 reference 了。</p>
+<h3 id="第一步：实现插件的-main-函数"><a href="#第一步：实现插件的-main-函数" class="headerlink" title="第一步：实现插件的 main 函数"></a>第一步：实现插件的 main 函数</h3><p>对应官网 <a target="_blank" rel="noopener" href="https://protobuf.dev/reference/cpp/api-docs/google.protobuf.compiler.plugin/">plugin</a> 中的内容。所需头文件 google&#x2F;protobuf&#x2F;compiler&#x2F;plugin.h</p>
+<p>要使用 c++ 实现 protoc 插件，首先要实现一个 CodeGenerator (第二步中说)，然后创建一个 main 函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span>* argv[])</span> </span>&#123;</span><br><span class="line">  MyCodeGenerator generator;</span><br><span class="line">  <span class="keyword">return</span> google::protobuf::compiler::<span class="built_in">PluginMain</span>(argc, argv, &amp;generator);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>protoc 插件是要编译成一个可执行文件的，这个 main 就是插件的入口。当 protoc 执行插件时，会调用 PluginMain()，将对应 .proto 文件的描述信息传递给我们自己的 CodeGenerator, 再由后者进行代码的生成。假设编译出的插件可执行文件名为 NAME，使用下面的命令让 protoc 执行插件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc --plugin=protoc-gen-NAME=path/to/my/plugin --NAME_out=OUT_DIR</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="第二步：自定义-CodeGenerator"><a href="#第二步：自定义-CodeGenerator" class="headerlink" title="第二步：自定义 CodeGenerator"></a>第二步：自定义 CodeGenerator</h3><p>自定义 MyGenerator 类，继承 <a target="_blank" rel="noopener" href="https://protobuf.dev/reference/cpp/api-docs/google.protobuf.compiler.cpp_generator/">CppGenerator</a>。CppGenerator 自身也是 CodeGenerator 的子类，是专门用于生成 c++ 代码的。然后重写 CppGenerator 的 Generate() 方法。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// google/protobuf/compiler/cpp/generator.h</span></span><br><span class="line"><span class="comment">// namespace google::protobuf::compiler::cpp</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">Generate</span><span class="params">(<span class="type">const</span> FileDescriptor* file, <span class="type">const</span> std::string&amp; parameter, GeneratorContext* generator_context, std::string* error)</span> <span class="type">const</span></span></span><br></pre></td></tr></table></figure>
+
+<p>参数：</p>
+<p><strong>file</strong>： proto 文件的描述符，包含了 proto 文件的所有信息。protobuf 中各种类都有对应的 Descriptor。</p>
+<p><a target="_blank" rel="noopener" href="https://protobuf.dev/reference/cpp/api-docs/google.protobuf.descriptor/#FileDescriptor">FileDescriptor</a> 部分方法如下：</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">const</span> Descriptor* <span class="title">FindMessageTypeByName</span><span class="params">(ConstStringParam name)</span> <span class="type">const</span></span></span><br></pre></td></tr></table></figure>
+
+<p>  根据名称获取 message 的描述符  </p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">message_type_count</span><span class="params">()</span> <span class="type">const</span></span></span><br></pre></td></tr></table></figure>
+
+<p>   顶层 message 的个数(嵌套的不算) </p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">const</span> Descriptor* <span class="title">message_type</span><span class="params">(<span class="type">int</span> index)</span> <span class="type">const</span></span></span><br></pre></td></tr></table></figure>
+
+<p>  根据索引获取 message 的描述符，可以和 message_type_count() 配合遍历所有顶层 message </p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">const</span> ServiceDescriptor* <span class="title">FindServiceByName</span><span class="params">(ConstStringParam name)</span> <span class="type">const</span></span></span><br></pre></td></tr></table></figure>
+
+<p>  根据名称获取 service 的描述符</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">service_count</span><span class="params">()</span> <span class="type">const</span></span></span><br></pre></td></tr></table></figure>
+<p>  service 的个数 </p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">const</span> ServiceDescriptor* <span class="title">service</span><span class="params">(<span class="type">int</span> index)</span> <span class="type">const</span></span></span><br></pre></td></tr></table></figure>
+
+<p>根据索引获取 service的描述符，可以和 service_count() 配合遍历所有 service.</p>
+<p>还有好多方法，见<a target="_blank" rel="noopener" href="https://protobuf.dev/reference/cpp/api-docs/google.protobuf.descriptor/#FileDescriptor">官网</a></p>
+<p><strong>parameter</strong>：传递给 plugin 的命令行参数，可以通过 <a target="_blank" rel="noopener" href="https://protobuf.dev/reference/cpp/api-docs/google.protobuf.compiler.code_generator/#ParseGeneratorParameter.details">ParseGeneratorParameter()</a> 函数解析。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// google/protobuf/compiler/code_generator.h</span></span><br><span class="line"><span class="comment">// namespace google::protobuf::compiler</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ParseGeneratorParameter</span><span class="params">(absl::string_view, std::vector&lt;std::pair&lt;std::string,std::string&gt;&gt;*)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>解析到的参数以键值对形式保存在 vector 里。执行 protoc 时这样传参(假设插件名称为 plg)：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc test.proto --plg_out=param1=v1,param2=v2:. --plugin=protoc-gen-plg=/path/to/protoc-gen/plg</span><br></pre></td></tr></table></figure>
+
+<p>表示生成文件到当前目录，传递 param1，param2 两个参数。vector 中内容将会是 </p>
+<p>  <code>&#123;&#123;"param1", "v1"&#125;, &#123;"param2", "v2"&#125;&#125;</code>。</p>
+<p><strong>generator_context</strong>：代表输出目录。<a href="">GeneratorContext</a> 在旧版本中叫 OutputDirectory，代表 generator 生成文件的目录。部分方法如下：</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">virtual</span> io::ZeroCopyOutputStream* <span class="title">Open</span><span class="params">(<span class="type">const</span> std::string&amp; filename)</span> </span>= <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+
+<p>  以截断方式打开输出文件</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">virtual</span> io::ZeroCopyOutputStream* <span class="title">OpenForAppend</span><span class="params">(<span class="type">const</span> std::string&amp; filename)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>  以追加方式打开输出文件</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">virtual</span> io::ZeroCopyOutputStream* <span class="title">OpenForInsert</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">      <span class="type">const</span> std::string&amp; filename, <span class="type">const</span> std::string&amp; insertion_point)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>  在指定的插入点处插入，插入点的概念见<a target="_blank" rel="noopener" href="https://protobuf.dev/reference/cpp/api-docs/google.protobuf.compiler.plugin.pb/">此处</a>，目前还没有仔细研究过这种方法。</p>
+<h3 id="简单-DEMO"><a href="#简单-DEMO" class="headerlink" title="简单 DEMO"></a>简单 DEMO</h3><p><strong>test.proto</strong></p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">syntax = <span class="string">&quot;proto3&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> tutorial;</span><br><span class="line"></span><br><span class="line"><span class="keyword">message </span><span class="title class_">Person</span> &#123;</span><br><span class="line">    <span class="keyword">optional</span> <span class="type">string</span> name = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">optional</span> <span class="type">int32</span> id = <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">optional</span> <span class="type">string</span> email = <span class="number">3</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">enum </span><span class="title class_">PhoneType</span> &#123;</span><br><span class="line">        PHONE_TYPE_UNSPECIFIED = <span class="number">0</span>;</span><br><span class="line">        PHONE_TYPE_MOBILE = <span class="number">1</span>;</span><br><span class="line">        PHONE_TYPE_HOME = <span class="number">2</span>;</span><br><span class="line">        PHONE_TYPE_WORK = <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">message </span><span class="title class_">PhoneNumber</span> &#123;</span><br><span class="line">        <span class="keyword">optional</span> <span class="type">string</span> number = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">optional</span> PhoneType type = <span class="number">2</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">repeated</span> PhoneNumber phones = <span class="number">4</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">message </span><span class="title class_">AddressBook</span> &#123;</span><br><span class="line">    <span class="keyword">repeated</span> Person people = <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">message </span><span class="title class_">ResultCode</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int32</span> errcode = <span class="number">1</span>;</span><br><span class="line">    <span class="type">bytes</span> errmsg = <span class="number">2</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">message </span><span class="title class_">LoginResponse</span></span><br><span class="line">&#123;</span><br><span class="line">    ResultCode result = <span class="number">1</span>;</span><br><span class="line">    <span class="type">bool</span> success = <span class="number">2</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">option</span> cc_generic_services = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">service </span><span class="title class_">PersonLoginService</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> Login(Person) <span class="keyword">returns</span>(LoginResponse)</span>;</span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> GetPhone(Person) <span class="keyword">returns</span>(Person.PhoneNumber)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编写一个简单的 plugin，将输入参数，所有顶层 message 的名称，service 以及 method 的信息输出到生成文件 plg_out.txt 中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;google/protobuf/compiler/cpp/generator.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;google/protobuf/compiler/code_generator.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;google/protobuf/compiler/plugin.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;google/protobuf/descriptor.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;google/protobuf/io/zero_copy_stream.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;google/protobuf/io/printer.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> google::protobuf;</span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> google::protobuf::io;</span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> google::protobuf::compiler;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyGenerator</span> : <span class="keyword">public</span> google::protobuf::compiler::cpp::CppGenerator &#123;</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">Generate</span><span class="params">(<span class="type">const</span> FileDescriptor* file, <span class="type">const</span> std::string&amp; parameter,</span></span></span><br><span class="line"><span class="params"><span class="function">                  GeneratorContext* generator_context,</span></span></span><br><span class="line"><span class="params"><span class="function">                  std::string* error)</span> <span class="type">const</span> <span class="keyword">override</span> </span>&#123;</span><br><span class="line">        <span class="keyword">auto</span> stream = generator_context-&gt;<span class="built_in">Open</span>(<span class="string">&quot;plg_out.txt&quot;</span>);</span><br><span class="line">        <span class="function">Printer <span class="title">printer</span><span class="params">(stream)</span></span>;</span><br><span class="line"></span><br><span class="line">        printer.<span class="built_in">PrintRaw</span>(<span class="string">&quot;input params: \n&quot;</span>);</span><br><span class="line">        std::vector&lt;std::pair&lt;std::string, std::string&gt;&gt; params;</span><br><span class="line">        <span class="built_in">ParseGeneratorParameter</span>(parameter, &amp;params);</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">const</span> <span class="keyword">auto</span>&amp; p: params) &#123;</span><br><span class="line">            printer.<span class="built_in">PrintRaw</span>(p.first + <span class="string">&quot;=&quot;</span> + p.second + <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        printer.<span class="built_in">PrintRaw</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">        printer.<span class="built_in">PrintRaw</span>(<span class="string">&quot;messages: \n&quot;</span>);</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; file-&gt;<span class="built_in">message_type_count</span>(); i++) &#123;</span><br><span class="line">            <span class="keyword">auto</span> message = file-&gt;<span class="built_in">message_type</span>(i);</span><br><span class="line">            printer.<span class="built_in">PrintRaw</span>(message-&gt;<span class="built_in">name</span>() + <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        printer.<span class="built_in">PrintRaw</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">auto</span> service = file-&gt;<span class="built_in">service</span>(<span class="number">0</span>);</span><br><span class="line">        printer.<span class="built_in">PrintRaw</span>(<span class="string">&quot;service: \n&quot;</span>);</span><br><span class="line">        printer.<span class="built_in">PrintRaw</span>(service-&gt;<span class="built_in">DebugString</span>());</span><br><span class="line">        printer.<span class="built_in">PrintRaw</span>(<span class="string">&quot;methods in this service: \n&quot;</span>);</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; service-&gt;<span class="built_in">method_count</span>(); i++) &#123;</span><br><span class="line">            <span class="keyword">auto</span> method = service-&gt;<span class="built_in">method</span>(i);</span><br><span class="line">            printer.<span class="built_in">PrintRaw</span>(method-&gt;<span class="built_in">name</span>() + <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">            <span class="keyword">auto</span> input = method-&gt;<span class="built_in">input_type</span>();</span><br><span class="line">            <span class="keyword">auto</span> output = method-&gt;<span class="built_in">output_type</span>();</span><br><span class="line">            printer.<span class="built_in">PrintRaw</span>(<span class="string">&quot;method input: &quot;</span> + input-&gt;<span class="built_in">name</span>() + <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">            printer.<span class="built_in">PrintRaw</span>(<span class="string">&quot;method output: &quot;</span> + output-&gt;<span class="built_in">name</span>() + <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span>* argv[])</span> </span>&#123;</span><br><span class="line">    MyGenerator generator;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">PluginMain</span>(argc, argv, &amp;generator);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>plg_out 内容：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">input params: </span><br><span class="line">param1=v1</span><br><span class="line">param2=v2</span><br><span class="line"></span><br><span class="line">messages: </span><br><span class="line">Person</span><br><span class="line">AddressBook</span><br><span class="line">ResultCode</span><br><span class="line">LoginResponse</span><br><span class="line"></span><br><span class="line">service: </span><br><span class="line">service PersonLoginService &#123;</span><br><span class="line">  rpc Login(.tutorial.Person) returns (.tutorial.LoginResponse);</span><br><span class="line">  rpc GetPhone(.tutorial.Person) returns (.tutorial.Person.PhoneNumber);</span><br><span class="line">&#125;</span><br><span class="line">methods in this service: </span><br><span class="line">Login</span><br><span class="line">method input: Person</span><br><span class="line">method output: LoginResponse</span><br><span class="line">GetPhone</span><br><span class="line">method input: Person</span><br><span class="line">method output: PhoneNumber</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="注：插件链接的时候要链接-libprotoc，而普通的使用-protobuf-的程序不需要。而且-libprotoc-要最先链接，CMakeList-如下："><a href="#注：插件链接的时候要链接-libprotoc，而普通的使用-protobuf-的程序不需要。而且-libprotoc-要最先链接，CMakeList-如下：" class="headerlink" title="注：插件链接的时候要链接 libprotoc，而普通的使用 protobuf 的程序不需要。而且 libprotoc 要最先链接，CMakeList 如下："></a>注：插件链接的时候要链接 libprotoc，而普通的使用 protobuf 的程序不需要。而且 libprotoc 要最先链接，CMakeList 如下：</h3><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">find_package</span>(PkgConfig)</span><br><span class="line">pkg_search_module(Protobuf REQUIRED protobuf)</span><br><span class="line"><span class="keyword">include_directories</span>(<span class="variable">$&#123;Protobuf_INCLUDE_DIRS&#125;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">link_directories</span>(<span class="variable">$&#123;Protobuf_LIBRARY_DIRS&#125;</span>)</span><br><span class="line"><span class="keyword">link_libraries</span>(protoc <span class="variable">$&#123;Protobuf_LIBRARIES&#125;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">add_executable</span>(protoc-gen-plg plugin_test.cpp)</span><br></pre></td></tr></table></figure>
+
+
+
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a href="/categories/">Categories</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E5%AE%9E%E7%8E%B0%E6%8F%92%E4%BB%B6%E7%9A%84-main-%E5%87%BD%E6%95%B0"><span class="toc-number">1.</span> <span class="toc-text">第一步：实现插件的 main 函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E8%87%AA%E5%AE%9A%E4%B9%89-CodeGenerator"><span class="toc-number">2.</span> <span class="toc-text">第二步：自定义 CodeGenerator</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AE%80%E5%8D%95-DEMO"><span class="toc-number">3.</span> <span class="toc-text">简单 DEMO</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B3%A8%EF%BC%9A%E6%8F%92%E4%BB%B6%E9%93%BE%E6%8E%A5%E7%9A%84%E6%97%B6%E5%80%99%E8%A6%81%E9%93%BE%E6%8E%A5-libprotoc%EF%BC%8C%E8%80%8C%E6%99%AE%E9%80%9A%E7%9A%84%E4%BD%BF%E7%94%A8-protobuf-%E7%9A%84%E7%A8%8B%E5%BA%8F%E4%B8%8D%E9%9C%80%E8%A6%81%E3%80%82%E8%80%8C%E4%B8%94-libprotoc-%E8%A6%81%E6%9C%80%E5%85%88%E9%93%BE%E6%8E%A5%EF%BC%8CCMakeList-%E5%A6%82%E4%B8%8B%EF%BC%9A"><span class="toc-number">4.</span> <span class="toc-text">注：插件链接的时候要链接 libprotoc，而普通的使用 protobuf 的程序不需要。而且 libprotoc 要最先链接，CMakeList 如下：</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&text=protobuf c++ 插件开发"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&title=protobuf c++ 插件开发"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&is_video=false&description=protobuf c++ 插件开发"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=protobuf c++ 插件开发&body=Check out this article: http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&title=protobuf c++ 插件开发"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&title=protobuf c++ 插件开发"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&title=protobuf c++ 插件开发"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&title=protobuf c++ 插件开发"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&name=protobuf c++ 插件开发&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/30/protobuf-c++%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/&t=protobuf c++ 插件开发"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2023
+    ZR
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
