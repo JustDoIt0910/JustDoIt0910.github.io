@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="我使用的 protobuf 版本是 22.5。protobuf 从版本 22 以后依赖 abseil 等第三方库，需要递归 clone。如果手动下载的话也要注意下载对应版本的第三方库，否则链接时会错误。 1git clone -b v22.5 https:&#x2F;&#x2F;github.com&#x2F;protocolbuffers&#x2F;protobuf.git --recursive  然后按照 protobuf git">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ubuntu安装protobuf过程和问题">
+<meta property="og:url" content="http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="Welcome to ZR&#39;s blog">
+<meta property="og:description" content="我使用的 protobuf 版本是 22.5。protobuf 从版本 22 以后依赖 abseil 等第三方库，需要递归 clone。如果手动下载的话也要注意下载对应版本的第三方库，否则链接时会错误。 1git clone -b v22.5 https:&#x2F;&#x2F;github.com&#x2F;protocolbuffers&#x2F;protobuf.git --recursive  然后按照 protobuf git">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-10-30T05:49:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T06:46:07.874Z">
+<meta property="article:author" content="ZR">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>ubuntu安装protobuf过程和问题</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/10/27/unordered_set%E5%92%8Cunordered_map%E8%87%AA%E5%AE%9A%E4%B9%89%E7%B1%BB%E5%9E%8B/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&text=ubuntu安装protobuf过程和问题"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&title=ubuntu安装protobuf过程和问题"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&is_video=false&description=ubuntu安装protobuf过程和问题"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=ubuntu安装protobuf过程和问题&body=Check out this article: http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&title=ubuntu安装protobuf过程和问题"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&title=ubuntu安装protobuf过程和问题"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&title=ubuntu安装protobuf过程和问题"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&title=ubuntu安装protobuf过程和问题"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&name=ubuntu安装protobuf过程和问题&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&t=ubuntu安装protobuf过程和问题"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        ubuntu安装protobuf过程和问题
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">ZR</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-10-30T05:49:59.000Z" class="dt-published" itemprop="datePublished">2023-10-30</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/protobuf/">protobuf</a>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>我使用的 protobuf 版本是 22.5。protobuf 从版本 22 以后依赖 abseil 等第三方库，需要递归 clone。如果手动下载的话也要注意下载对应版本的第三方库，否则链接时会错误。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> -b v22.5 https://github.com/protocolbuffers/protobuf.git --recursive</span><br></pre></td></tr></table></figure>
+
+<p>然后按照 <a target="_blank" rel="noopener" href="https://github.com/protocolbuffers/protobuf/tree/v22.5/cmake">protobuf github</a> 上的说明编译安装。编译这一步需要好久，在虚拟机里还有可能出现内存不足的情况，扩展一下虚拟机内存就好了。cmake install 安装前缀是 &#x2F;usr&#x2F;local</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cmake .</span><br><span class="line">cmake --build . --parallel 10</span><br><span class="line">ctest --verbose</span><br><span class="line">sudo cmake --install .</span><br></pre></td></tr></table></figure>
+
+<p>执行 protoc –version 确认安装成功了</p>
+<p>写个简单的测试 demo。一开始我尝试用官方和网上大多数方法在自己的 CMakeLists.txt 里引入 protobuf 库，即直接find_package(Protobuf REQUIRED)，这会使用 cmake 官方的 FindProtobuf.cmake 模块来搜索 protobuf。</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">find_package</span>(Protobuf REQUIRED)</span><br><span class="line"><span class="keyword">include_directories</span>(<span class="variable">$&#123;Protobuf_INCLUDE_DIRS&#125;</span>)</span><br><span class="line"><span class="keyword">include_directories</span>(<span class="variable">$&#123;CMAKE_CURRENT_BINARY_DIR&#125;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">add_executable</span>(protobuf_learn main.cpp <span class="keyword">test</span>.pb.cc)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(protobuf_learn <span class="variable">$&#123;Protobuf_LIBRARIES&#125;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>编译没有问题，但是链接出现大量类似下面的报错，看起来是没有链接到 abseil 的静态库：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/bin/ld: any_lite.cc:(.text+0x165): undefined reference to `absl::lts_20230125::StrCat[abi:cxx11](absl::lts_20230125::AlphaNum const&amp;, absl::lts_20230125::AlphaNum const&amp;, absl::lts_20230125::AlphaNum const&amp;)&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>然后 在cmake 里输出一下 Protobuf_LIBRARIES:</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">find_package</span>(Protobuf REQUIRED)</span><br><span class="line"><span class="keyword">include_directories</span>(<span class="variable">$&#123;Protobuf_INCLUDE_DIRS&#125;</span>)</span><br><span class="line"><span class="keyword">include_directories</span>(<span class="variable">$&#123;CMAKE_CURRENT_BINARY_DIR&#125;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">MESSAGE</span>(STATUS <span class="string">&quot;Protobuf dirs:&quot;</span> <span class="variable">$&#123;Protobuf_INCLUDE_DIRS&#125;</span>)</span><br><span class="line"><span class="keyword">MESSAGE</span>(STATUS <span class="string">&quot;Protobuf lib:&quot;</span> <span class="variable">$&#123;Protobuf_LIBRARIES&#125;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">add_executable</span>(protobuf_learn main.cpp <span class="keyword">test</span>.pb.cc)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(protobuf_learn <span class="variable">$&#123;Protobuf_LIBRARIES&#125;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>输出如下：确实没有链接 abseil，只是链接了 libprotobuf。查了好久也没找到类似的问题解决方案。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">-- Protobuf <span class="built_in">dirs</span>:/usr/local/include</span><br><span class="line">-- Protobuf lib:/usr/local/lib/libprotobuf.a-lpthread</span><br></pre></td></tr></table></figure>
+
+<p>后来尝试不直接 find_package(Protobuf REQUIRED)，使用 pkg-config 来搜索 protobuf 的依赖：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">find_package</span>(PkgConfig)</span><br><span class="line">pkg_search_module(Protobuf REQUIRED protobuf)</span><br><span class="line"><span class="keyword">MESSAGE</span>(STATUS <span class="string">&quot;Protobuf dirs:&quot;</span> <span class="variable">$&#123;Protobuf_INCLUDE_DIRS&#125;</span>)</span><br><span class="line"><span class="keyword">MESSAGE</span>(STATUS <span class="string">&quot;Protobuf lib:&quot;</span> <span class="variable">$&#123;Protobuf_LIBRARIES&#125;</span>)</span><br><span class="line"><span class="keyword">include_directories</span>(<span class="variable">$&#123;Protobuf_INCLUDE_DIRS&#125;</span>)</span><br><span class="line"><span class="keyword">link_directories</span>(<span class="variable">$&#123;Protobuf_LIBRARY_DIRS&#125;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">add_executable</span>(protobuf_learn main.cpp <span class="keyword">test</span>.pb.cc)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(protobuf_learn</span><br><span class="line">        <span class="variable">$&#123;Protobuf_LIBRARIES&#125;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>这种方式可以链接成功，而且 Protobuf_LIBRARY_DIRS 变量里也包含了一大堆 abseil 的库：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">-- Protobuf lib:protobufpthreadabsl_log_internal_check_opabsl_leak_checkabsl_die_if_nullabsl_log_internal_conditionsabsl_log_internal_messageabsl_examine_stackabsl_log_internal_formatabsl_log_internal_protoabsl_log_internal_nullguardabsl_log_internal_log_sink_setabsl_log_sinkabsl_log_entryabsl_flagsabsl_flags_internalabsl_flags_marshallingabsl_flags_reflectionabsl_flags_private_handle_accessorabsl_flags_commandlineflagabsl_flags_commandlineflag_internalabsl_flags_configabsl_flags_program_nameabsl_log_initializeabsl_log_globalsabsl_log_internal_globalsabsl_hashabsl_cityabsl_low_level_hashabsl_raw_hash_setabsl_hashtablez_samplerabsl_statusorabsl_statusabsl_cordabsl_cordz_infoabsl_cord_internalabsl_cordz_functionsabsl_exponential_biasedabsl_cordz_handleabsl_crc_cord_stateabsl_crc32cabsl_crc_internalabsl_crc_cpu_detectabsl_bad_optional_accessabsl_str_format_internalabsl_strerrorabsl_synchronizationabsl_graphcycles_internalabsl_stacktraceabsl_symbolizeabsl_debugging_internalabsl_demangle_internalabsl_malloc_internalabsl_timeabsl_civil_timeabsl_time_zoneabsl_bad_variant_accessutf8_validityutf8_rangepthreadabsl_stringsabsl_strings_internalrtabsl_baseabsl_spinlock_waitabsl_int128absl_throw_delegateabsl_raw_logging_internalabsl_log_severity</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>暂时还不知道为什么第一种方法不行。</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a href="/categories/">Categories</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&text=ubuntu安装protobuf过程和问题"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&title=ubuntu安装protobuf过程和问题"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&is_video=false&description=ubuntu安装protobuf过程和问题"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=ubuntu安装protobuf过程和问题&body=Check out this article: http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&title=ubuntu安装protobuf过程和问题"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&title=ubuntu安装protobuf过程和问题"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&title=ubuntu安装protobuf过程和问题"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&title=ubuntu安装protobuf过程和问题"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&name=ubuntu安装protobuf过程和问题&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/30/ubuntu%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85protobuf%E8%BF%87%E7%A8%8B%E5%92%8C%E9%97%AE%E9%A2%98/&t=ubuntu安装protobuf过程和问题"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2023
+    ZR
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
