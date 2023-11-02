@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="总结一下 linux c&#x2F;c++ 时间相关 API c-style APIlinux 下时间表示类型 time_t：表示从 epoch time (1970-01-01 00:00:00 +0000) 到现在的秒数，实际类型为 long int  struct timeval：同是 epoch time 距今时间差，最高精度为微秒 1234567&#x2F;* A time value that">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux c&#x2F;c++ 时间日期操作">
+<meta property="og:url" content="http://example.com/2022/04/02/linux%20c&c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/index.html">
+<meta property="og:site_name" content="Welcome to ZR&#39;s blog">
+<meta property="og:description" content="总结一下 linux c&#x2F;c++ 时间相关 API c-style APIlinux 下时间表示类型 time_t：表示从 epoch time (1970-01-01 00:00:00 +0000) 到现在的秒数，实际类型为 long int  struct timeval：同是 epoch time 距今时间差，最高精度为微秒 1234567&#x2F;* A time value that">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-04-02T15:36:06.000Z">
+<meta property="article:modified_time" content="2023-11-02T17:59:39.408Z">
+<meta property="article:author" content="ZR">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>linux c/c++ 时间日期操作</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2023/09/16/Hexo%E5%88%9B%E5%BB%BA%E6%96%87%E7%AB%A0%E5%92%8C%E7%9B%AE%E5%BD%95/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&text=linux c/c++ 时间日期操作"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&title=linux c/c++ 时间日期操作"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&is_video=false&description=linux c/c++ 时间日期操作"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=linux c/c++ 时间日期操作&body=Check out this article: http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&title=linux c/c++ 时间日期操作"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&title=linux c/c++ 时间日期操作"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&title=linux c/c++ 时间日期操作"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&title=linux c/c++ 时间日期操作"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&name=linux c/c++ 时间日期操作&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&t=linux c/c++ 时间日期操作"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#c-style-API"><span class="toc-number">1.</span> <span class="toc-text">c-style API</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#linux-%E4%B8%8B%E6%97%B6%E9%97%B4%E8%A1%A8%E7%A4%BA%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.1.</span> <span class="toc-text">linux 下时间表示类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%B6%E9%97%B4-API"><span class="toc-number">1.2.</span> <span class="toc-text">时间 API</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c-chrono"><span class="toc-number">2.</span> <span class="toc-text">c++ chrono</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        linux c/c++ 时间日期操作
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">ZR</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-04-02T15:36:06.000Z" class="dt-published" itemprop="datePublished">2022-04-02</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/linux%E7%BC%96%E7%A8%8B/">linux编程</a>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>总结一下 linux c&#x2F;c++ 时间相关 API</p>
+<h2 id="c-style-API"><a href="#c-style-API" class="headerlink" title="c-style API"></a>c-style API</h2><h3 id="linux-下时间表示类型"><a href="#linux-下时间表示类型" class="headerlink" title="linux 下时间表示类型"></a>linux 下时间表示类型</h3><ul>
+<li><p><strong>time_t</strong>：表示从 epoch time (1970-01-01 00:00:00 +0000) 到现在的<strong>秒数</strong>，实际类型为 long int</p>
+</li>
+<li><p><strong>struct timeval</strong>：同是 epoch time 距今时间差，最高精度为微秒</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* A time value that is accurate to the nearest</span></span><br><span class="line"><span class="comment">   microsecond but also has a range of years.  */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">timeval</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="type">__time_t</span> tv_sec;		<span class="comment">/* Seconds.  */</span></span><br><span class="line">  <span class="type">__suseconds_t</span> tv_usec;	<span class="comment">/* Microseconds.  */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>struct timespec</strong>：同上，最高精度为纳秒</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">timespec</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="type">__time_t</span> tv_sec;		<span class="comment">/* Seconds.  */</span></span><br><span class="line">  <span class="type">__syscall_slong_t</span> tv_nsec;	<span class="comment">/* Nanoseconds.  */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>struct tm</strong>：分解时间，以人类可读的年月日时分秒格式存储</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">tm</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="type">int</span> tm_sec;			<span class="comment">/* 秒 – 取值区间为[0,59] */</span></span><br><span class="line">  <span class="type">int</span> tm_min;			<span class="comment">/* 分 - 取值区间为[0,59] */</span></span><br><span class="line">  <span class="type">int</span> tm_hour;			<span class="comment">/* 时 - 取值区间为[0,23] */</span></span><br><span class="line">  <span class="type">int</span> tm_mday;			<span class="comment">/* 一个月中的日期 - 取值区间为[1,31] */</span></span><br><span class="line">  <span class="type">int</span> tm_mon;			<span class="comment">/* 月份(从 0 开始，0 代表 1 月) - 取值区间为[0,11] */</span></span><br><span class="line">  <span class="type">int</span> tm_year;			<span class="comment">/* 以 1900 年为起始的年份  */</span></span><br><span class="line">  <span class="type">int</span> tm_wday;			<span class="comment">/* Day of week.	[0-6] */</span></span><br><span class="line">  <span class="type">int</span> tm_yday;			<span class="comment">/* Days in year.[0-365]	*/</span></span><br><span class="line">  <span class="type">int</span> tm_isdst;			<span class="comment">/* DST.		[-1/0/1]*/</span></span><br><span class="line"></span><br><span class="line">  <span class="type">long</span> <span class="type">int</span> tm_gmtoff;		<span class="comment">/* Seconds east of UTC.  */</span></span><br><span class="line">  <span class="type">const</span> <span class="type">char</span> *tm_zone;		<span class="comment">/* Timezone abbreviation.  */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="时间-API"><a href="#时间-API" class="headerlink" title="时间 API"></a>时间 API</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">time_t</span> <span class="title function_">time</span><span class="params">(<span class="type">time_t</span> *t)</span>; </span><br><span class="line"><span class="comment">/* 返回 epoch time 到现在经过的秒数 */</span></span><br></pre></td></tr></table></figure>
+
+<p>以下是 time_t 与分解时间格式 struct tm 之间转换函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> tm *<span class="title function_">gmtime</span> <span class="params">(<span class="type">const</span> <span class="type">time_t</span> *__timer)</span> </span><br><span class="line"><span class="comment">/* 将 time_t 格式按照 UTC 时间(即世界协调时)转换成 struct tm 格式 */</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> tm *<span class="title function_">localtime</span> <span class="params">(<span class="type">const</span> <span class="type">time_t</span> *__timer)</span>;</span><br><span class="line"><span class="comment">/* 将 time_t 格式按照本地时区转换成 struct tm 格式 */</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">time_t</span> <span class="title function_">mktime</span> <span class="params">(<span class="keyword">struct</span> tm *__tp)</span>;</span><br><span class="line"><span class="comment">/* 将 struct tm 格式转换成 time_t 格式 */</span></span><br></pre></td></tr></table></figure>
+<p>其他获取时间的函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">gettimeofday</span> <span class="params">(<span class="keyword">struct</span> timeval *__restrict __tv, <span class="type">void</span> *__restrict __tz)</span>;</span><br></pre></td></tr></table></figure>
+<p>获取 epoch time 距今的秒数和微秒数。原本第二个参数是可以传一个 struct timezone* 类型的时区参数的，该参数现已废弃，应该传 NULL，该函数本身已是半废弃状态，推荐使用下面的 clock_gettime() 函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">clock_gettime</span> <span class="params">(<span class="type">clockid_t</span> __clock_id, <span class="keyword">struct</span> timespec *__tp)</span>;</span><br></pre></td></tr></table></figure>
+<p>获取 __clock_id 所指向的那个系统时钟的时间，精度可达纳秒。根据 linux 手册，第一个参数可指定 8 种时钟类型，这里简单记录几种：</p>
+<ul>
+<li><strong>CLOCK_REALTIME</strong>：实时时钟(墙上时钟)，表示自 epoch time 以来的秒数和纳秒数，该时钟既会受系统时间不连续跳跃的影响(比如系统管理员更改了时钟)，也会受到增量改变的影响，比如 adjtime() 和 NTP。</li>
+<li><strong>CLOCK_MONOTONIC</strong>：单调时钟，在 Linux 中表示自系统启动以来的时间，不受系统时间不连续跳跃的影响，但会受 ajdtime() 或 NTP 影响。</li>
+<li><strong>CLOCK_REALTIME_COARSE</strong>：功能同 CLOCK_REALTIME，但在牺牲精度的条件下提供了更快的速度。</li>
+<li><strong>CLOCK_MONOTONIC_COARSE</strong>：功能同 CLOCK_MONOTONIC，牺牲精度提高速度。</li>
+</ul>
+<p>以下是时间转字符串函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> *<span class="title function_">ctime</span> <span class="params">(<span class="type">const</span> <span class="type">time_t</span> *__timer)</span>;</span><br><span class="line"><span class="type">char</span> *<span class="title function_">asctime</span> <span class="params">(<span class="type">const</span> <span class="keyword">struct</span> tm *__tp)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>这两个函数都将时间转换成 “Day Mon dd hh:mm:ss yyyy\n” 格式，只不过参数类型不同。调用 ctime(t) 相当于调用 asctime (localtime(t))，即 ctime() 会自动转换本地时区。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">size_t</span> <span class="title function_">strftime</span> <span class="params">(<span class="type">char</span> *s, <span class="type">size_t</span> maxsize, <span class="type">const</span> <span class="type">char</span> *format, <span class="type">const</span> <span class="keyword">struct</span> tm *tp)</span></span><br></pre></td></tr></table></figure>
+
+<p>将 struct tm 转成格式化时间字符串，详见 <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/chrono/c/strftime">reference</a></p>
+<h2 id="c-chrono"><a href="#c-chrono" class="headerlink" title="c++ chrono"></a>c++ chrono</h2><p>chrono 获取当前时间 (time_t 格式)：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> <span class="type">const</span> now = std::chrono::system_clock::<span class="built_in">now</span>();</span><br><span class="line">std::<span class="type">time_t</span> time = std::chrono::system_clock::<span class="built_in">to_time_t</span>(now);</span><br></pre></td></tr></table></figure>
+
+<p>使用 std::put_time 格式化时间字符串：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// time_t new_time</span></span><br><span class="line">std::stringstream ss;</span><br><span class="line">ss &lt;&lt; std::<span class="built_in">put_time</span>(std::<span class="built_in">localtime</span>(&amp;now_time), <span class="string">&quot;%R&quot;</span>);</span><br><span class="line">std::string time = ss.<span class="built_in">str</span>();</span><br></pre></td></tr></table></figure>
+
+<p>std::put_time 包含在 <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/header/iomanip">&lt;iomanip&gt;</a> 头文件中，具体 format 字符串格式见 <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/io/manip/put_time">reference</a></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a href="/categories/">Categories</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#c-style-API"><span class="toc-number">1.</span> <span class="toc-text">c-style API</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#linux-%E4%B8%8B%E6%97%B6%E9%97%B4%E8%A1%A8%E7%A4%BA%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.1.</span> <span class="toc-text">linux 下时间表示类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%B6%E9%97%B4-API"><span class="toc-number">1.2.</span> <span class="toc-text">时间 API</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c-chrono"><span class="toc-number">2.</span> <span class="toc-text">c++ chrono</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&text=linux c/c++ 时间日期操作"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&title=linux c/c++ 时间日期操作"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&is_video=false&description=linux c/c++ 时间日期操作"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=linux c/c++ 时间日期操作&body=Check out this article: http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&title=linux c/c++ 时间日期操作"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&title=linux c/c++ 时间日期操作"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&title=linux c/c++ 时间日期操作"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&title=linux c/c++ 时间日期操作"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&name=linux c/c++ 时间日期操作&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2022/04/02/linux%20c&amp;c++%20%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%93%8D%E4%BD%9C/&t=linux c/c++ 时间日期操作"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2023
+    ZR
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
