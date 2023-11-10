@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="tinyMQTT 目前只是单机 mqtt broker，我的目标是让其支持集群部署，对集群方式进行了一些思考，现记录一下初步暂定的方案和其他可能的方案，以免忘记。现在的思考受制于知识储备，难免不周，留待日后更正吧。 初步暂定方案一个 mqtt broker 的集群至少需要维护三种重要的数据结构：本地订阅树，全局主题树，全局路由表。本地订阅树是每台 broker 私有，可以看成是 topic –&amp;g">
+<meta property="og:type" content="article">
+<meta property="og:title" content="tinyMQTT 集群方式的思考">
+<meta property="og:url" content="http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/index.html">
+<meta property="og:site_name" content="Welcome to ZR&#39;s blog">
+<meta property="og:description" content="tinyMQTT 目前只是单机 mqtt broker，我的目标是让其支持集群部署，对集群方式进行了一些思考，现记录一下初步暂定的方案和其他可能的方案，以免忘记。现在的思考受制于知识储备，难免不周，留待日后更正吧。 初步暂定方案一个 mqtt broker 的集群至少需要维护三种重要的数据结构：本地订阅树，全局主题树，全局路由表。本地订阅树是每台 broker 私有，可以看成是 topic –&amp;g">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/pic/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/p1.jpg">
+<meta property="og:image" content="http://example.com/pic/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/p2.jpg">
+<meta property="article:published_time" content="2023-11-10T09:15:17.000Z">
+<meta property="article:modified_time" content="2023-11-10T16:31:48.314Z">
+<meta property="article:author" content="ZR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/pic/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/p1.jpg">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>tinyMQTT 集群方式的思考</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/11/01/c++%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&text=tinyMQTT 集群方式的思考"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&title=tinyMQTT 集群方式的思考"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&is_video=false&description=tinyMQTT 集群方式的思考"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=tinyMQTT 集群方式的思考&body=Check out this article: http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&title=tinyMQTT 集群方式的思考"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&title=tinyMQTT 集群方式的思考"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&title=tinyMQTT 集群方式的思考"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&title=tinyMQTT 集群方式的思考"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&name=tinyMQTT 集群方式的思考&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&t=tinyMQTT 集群方式的思考"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E6%AD%A5%E6%9A%82%E5%AE%9A%E6%96%B9%E6%A1%88"><span class="toc-number">1.</span> <span class="toc-text">初步暂定方案</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E6%96%B9%E6%A1%88"><span class="toc-number">2.</span> <span class="toc-text">其他方案</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        tinyMQTT 集群方式的思考
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">ZR</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-11-10T09:15:17.000Z" class="dt-published" itemprop="datePublished">2023-11-10</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/%E4%B8%AA%E4%BA%BA%E9%A1%B9%E7%9B%AE/">个人项目</a>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910/tinyMQTT">tinyMQTT</a> 目前只是单机 mqtt broker，我的目标是让其支持集群部署，对集群方式进行了一些思考，现记录一下初步暂定的方案和其他可能的方案，以免忘记。现在的思考受制于知识储备，难免不周，留待日后更正吧。</p>
+<h3 id="初步暂定方案"><a href="#初步暂定方案" class="headerlink" title="初步暂定方案"></a>初步暂定方案</h3><p>一个 mqtt broker 的集群至少需要维护三种重要的数据结构：本地订阅树，全局主题树，全局路由表。本地订阅树是每台 broker 私有，可以看成是 topic –&gt; clients 的映射，记录了哪些客户端订阅了本机的哪些 topic。全局主题树、全局路由表是所有 broker 共享的，应在 broker 之间保持保持一致。全局路由表是 topic –&gt; broker nodes 的映射，记录哪些 broker 对哪些 topic 感兴趣，例如，当某个客户端在 broker A 订阅了 &#x2F;topics&#x2F;#，那么全局路由表中应新增 &#x2F;topics&#x2F;# –&gt; [broker A] 的条目，表示 broker A 对 &#x2F;topics&#x2F;# 感兴趣，另一个客户端在 broker B 订阅了  &#x2F;topics&#x2F;#，全局路由表变为  &#x2F;topics&#x2F;# –&gt; [broker A, broker B]，只有本地新增 topic 时才需要更新路由表，比如又有其他客户端在 broker A 上订阅了 &#x2F;topics&#x2F;#，全局路由表不需要更新。当收到客户端的 publish 消息时，先查找路由表，找出所有对该消息对应主题感兴趣的 broker，将该消息发往所有感兴趣 broker，消息到达每台 broker 后，由其自己查找本地订阅树，转发到所有订阅了该主题的客户端，保证在不同 broker 上订阅相同主题的客户端都能收到该消息。全局主题树用于加速路由的查找。</p>
+<p>目前的想法是先不考虑消息的持久化，publish 消息只存在于 broker 内存。但是路由表，全局主题树需要持久化，便于 broker 宕机恢复，而且需要 broker 之间保持一致性 (目前方案采用最终一致性)。初步暂定方案如下：</p>
+<ul>
+<li><p><strong>集群成员发现</strong></p>
+<p>使用 etcd 来实现集群节点之间自动发现，指定一个共享的 prefix，例如 &#x2F;members&#x2F;online，当一个 broker 想要加入集群时(设 broker name 为 broker1)，它先调用 put 接口，创建一个 &#x2F;members&#x2F;online&#x2F;broker1 –&gt; broker1 IP 的 key value pair，再调用 watch 接口，监听 &#x2F;members&#x2F;online 这个 prefix。这里需要加分布式锁，保证 put 和 watch 之间没有其他 broker 的 put。当集群中已有的 broker 监听到  &#x2F;members&#x2F;online 下的 put 事件时，它需要主动与新增的 broker 建立 tcp 连接。这样在正常情况下集群间的 broker 两两之间都有 tcp 连接。每个 broker 对应的 key 与一个 lease 绑定，定期续约，相当于 broker 与 etcd 之间的心跳维持。</p>
+<p><img src="/pic/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/p1.jpg" alt="p1"></p>
+</li>
+<li><p><strong>订阅消息的复制</strong></p>
+<p>订阅消息我打算采用类似无主复制的方式，但和一般的无主复制不同，当一个 broker 上新增 topic 时，由它自己负责将这一路由表更新请求广播给其他所有 broker，其他 broker 收到后更新自己的路由表。当然这样会导致不同 broker 更新路由表的顺序不一致，但在这一特定场景下似乎并不重要，比如 broker1 的路由表中 &#x2F;topic 一项下先添加 broker2，后添加 broker3，而 broker5 的路由表中 &#x2F;topic 一项下先添加 broker3，后添加 broker2，效果都是一样的，因为路由表的每一项对应的是个 node 集合，是顺序无关的。所以这里的最终一致性其实指的是所有 broker 的路由表中都有相同的项，每项下都包含相同的 node 集合，集合中的顺序无所谓。所以要实现路由表的最终一致性，只需要每个 broker 都执行过来自其他 broker 的路由表更新请求即可。</p>
+</li>
+<li><p><strong>如何保证最终一致性</strong></p>
+<p>每个 broker 维护一个路由表的版本向量，有 N 个节点版本向量就是 N 维。比如上图每个 broker 初始版本向量都是 [0, 0, 0, 0, 0]。这里把广播路由表更新请求的那个 broker 称为路由更新的发起者，假设客户端在 broker1 上进行订阅，使得 broker1 上产生了新的 topic，broker1 广播路由表更新，那么 broker1 就是本次更新的发起者。当一个 broker 发起更新时，它首先将版本向量中自己对应的那一维 + 1，将其连带消息广播出去，此外还要在本地的 update_record 中记录此次操作，大概这样：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 发起者</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// self_name = &quot;broker1&quot;</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">save_update_record</span><span class="params">(<span class="type">int</span> version, <span class="type">const</span> <span class="type">char</span>* topic)</span>; <span class="comment">// 保存由自己发起的更新记录</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">add_self_to_router</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* topic)</span>; <span class="comment">// 把自己的节点名添加到路由表的 topic 下</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">broadcast</span><span class="params">(<span class="type">int</span> version, <span class="type">const</span> <span class="type">char</span>* topic)</span>; <span class="comment">// 广播路由表更新消息</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">update_router</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* topic)</span> &#123;</span><br><span class="line">    versions[self_name]++;</span><br><span class="line">    add_self_to_router(topic)</span><br><span class="line">    save_update_record(versions[self_name], topic)</span><br><span class="line">    broadcast(versions[self_name], topic);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当一个 broker 收到一条路由更新请求时，它首先检查请求中的 version 是否等于本地记录的版本向量对应维的值 + 1，如果是，执行更新，并将本地版本向量对应维 + 1，否则不做任何事。大概如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 被动更新者</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">on_update_router</span><span class="params">(update_req req)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span>(req.version == versions[req.peer_name] + <span class="number">1</span>) &#123;</span><br><span class="line">        apply_update(req.update);</span><br><span class="line">        versions[req.peer_name]++;</span><br><span class="line">	&#125;	</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// do nothing</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么如何保证最终一致性呢，我的想法是在节点之间的心跳消息中带上自己对应那一维的版本号，一个 broker 要定期向其他所有 broker 发送心跳消息，而当它收到其他节点的心跳后，将心跳消息携带的版本号和本地记录的对应 broker 的版本号比较，如果本地版本号 &lt; 心跳携带的版本号，说明自己落后了，要向对方发送请求同步的消息，并携带自己本地的版本号。当一个 broker 收到请求同步消息后，查找自己的 update_record，将 (请求同步消息中的 version, 本地 version] 范围内的更新记录发送给对方。接收方 apply 这些更新并更新本地版本向量：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// self_name = &quot;broker1&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">request_sync</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* peer_name, <span class="type">int</span> local_version)</span>; <span class="comment">// 向 peer_name 请求同步</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">send_sync</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* peer_name, <span class="type">int</span> offset)</span> <span class="comment">// 将本地 update_record 中 offset 以后的记录同步给peer_name</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">on_heartbeat_message</span><span class="params">(heartbeat_msg msg)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span>(versions[msg.peer_name] &lt; msg.version) &#123;</span><br><span class="line">        request_sync(msg.peer_name, versions[msg.peer_name]);</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">on_sync_request</span><span class="params">(sync_req req)</span> &#123;</span><br><span class="line">    <span class="type">int</span> offset = req.version;</span><br><span class="line">    send_sync(req.peer_name, offset);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">on_sync_response</span><span class="params">(sync_resp resp)</span> &#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; resp.updates.size; i++) &#123;</span><br><span class="line">        apply_update(resp.updates[i]);</span><br><span class="line">        versions[resp.peer_name]++;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其实 broker 本地的版本向量就是记录了对于集群中的每个 broker，已经执行了几次对方发起的更新。每个 broker 只需要记录由自己主动发起的更新，不需要记录被动执行的更新。同步过程如图：</p>
+<p><img src="/pic/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/p2.jpg" alt="p1"></p>
+</li>
+<li><p><strong>如何处理宕机恢复</strong></p>
+<p>为了能在宕机恢复时减少与其他 broker 同步的通信量，可以定期将本地版本向量与路由表持久化。或许可以以树形结构把路由表存在 sqlite 里。重启以后先把路由表和版本向量恢复，再加入集群，接下来上述的心跳机制会自动同步它缺失的更新。</p>
+</li>
+<li><p><strong>如何处理网络分区</strong></p>
+<p>感觉处理网络分区是最棘手的，因为情况多样，可能是对称分区或者非对称分区。不管怎样必须保证集群在任意时刻仅有一个分区在提供服务，否则如果同一时刻集群中有多个网络分区都在提供服务，那么会出现客户端认为自己订阅成功，但收不到其他客户端在另一个分区的 publish，所以需要在某些情况下牺牲 Availability 照顾一下 Consistency。我的想法是：当一个 broker 收不到大于等于 N &#x2F; 2 个节点的心跳时，就自动停止服务，任何客户端的 subscribe&#x2F;unsubscribe、publish 消息都会返回错误(qos 0 除外，反正 qos 0 本身就不保证送达)。并且定期重试加入集群。这样应该是可以避免多个分区同时服务的，可以尝试反证一下，假设 broker1、broker2 之间没有通路，如果broker1 能收到 N &#x2F; 2 个节点的心跳，那么算上 broker1 自己，broker1 所在分区节点数至少是 (N &#x2F; 2) + 1，同理，broker2 所在分区节点数也至少是 (N &#x2F; 2) + 1，一个集群不可能有两个节点数量为 (N &#x2F; 2) + 1 的分区，即 broker1 和 broker2 所在分区必有公共节点，与假设矛盾。但是又有新的问题，以上的订阅复制和同步等方案需要节点之间是两两连接的，在出现非对称分区的时候怎么办呢？暂时只能想到经过其他节点转达，如果 broker1，broker2 之间不能直连，那就把包标上源 broker name 和目的 broker name 后广播，把其他节点当路由器用，这应该会给集群内部带来大量通信负担，不过也想不出来啥好办法。</p>
+</li>
+</ul>
+<h3 id="其他方案"><a href="#其他方案" class="headerlink" title="其他方案"></a>其他方案</h3><ul>
+<li>采用主从复制的模式</li>
+<li>gossip 协议</li>
+<li>…</li>
+</ul>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a href="/categories/">Categories</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E6%AD%A5%E6%9A%82%E5%AE%9A%E6%96%B9%E6%A1%88"><span class="toc-number">1.</span> <span class="toc-text">初步暂定方案</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E6%96%B9%E6%A1%88"><span class="toc-number">2.</span> <span class="toc-text">其他方案</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&text=tinyMQTT 集群方式的思考"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&title=tinyMQTT 集群方式的思考"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&is_video=false&description=tinyMQTT 集群方式的思考"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=tinyMQTT 集群方式的思考&body=Check out this article: http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&title=tinyMQTT 集群方式的思考"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&title=tinyMQTT 集群方式的思考"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&title=tinyMQTT 集群方式的思考"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&title=tinyMQTT 集群方式的思考"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&name=tinyMQTT 集群方式的思考&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/11/10/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/&t=tinyMQTT 集群方式的思考"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2023
+    ZR
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
