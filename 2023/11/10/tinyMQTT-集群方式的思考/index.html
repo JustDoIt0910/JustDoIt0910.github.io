@@ -16,7 +16,7 @@
 <meta property="og:image" content="http://example.com/pic/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/p1.jpg">
 <meta property="og:image" content="http://example.com/pic/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/p2.jpg">
 <meta property="article:published_time" content="2023-11-10T09:15:17.000Z">
-<meta property="article:modified_time" content="2023-11-10T16:47:03.080Z">
+<meta property="article:modified_time" content="2023-11-11T04:57:29.851Z">
 <meta property="article:author" content="ZR">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/pic/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/p1.jpg">
@@ -83,6 +83,8 @@
     <br/>
     <span id="actions">
       <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2023/11/11/leveldb-varint%E7%BC%96%E7%A0%81/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
         
         
         <li><a class="icon" aria-label="Next post" href="/2023/11/01/c++%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
@@ -162,14 +164,14 @@
   <div class="content e-content" itemprop="articleBody">
     <p><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910/tinyMQTT">tinyMQTT</a> 目前只是单机 mqtt broker，我的目标是让其支持集群部署，对集群方式进行了一些思考，现记录一下初步暂定的方案和其他可能的方案，以免忘记。现在的思考受制于知识储备，难免不周，留待日后更正吧。</p>
 <h3 id="初步暂定方案"><a href="#初步暂定方案" class="headerlink" title="初步暂定方案"></a>初步暂定方案</h3><p>一个 mqtt broker 的集群至少需要维护三种重要的数据结构：本地订阅树，全局主题树，全局路由表。本地订阅树是每台 broker 私有，可以看成是 topic –&gt; clients 的映射，记录了哪些客户端订阅了本机的哪些 topic。全局主题树、全局路由表是所有 broker 共享的，应在 broker 之间保持保持一致。全局路由表是 topic –&gt; broker nodes 的映射，记录哪些 broker 对哪些 topic 感兴趣，例如，当某个客户端在 broker A 订阅了 &#x2F;topics&#x2F;#，那么全局路由表中应新增 &#x2F;topics&#x2F;# –&gt; [broker A] 的条目，表示 broker A 对 &#x2F;topics&#x2F;# 感兴趣，另一个客户端在 broker B 订阅了  &#x2F;topics&#x2F;#，全局路由表变为  &#x2F;topics&#x2F;# –&gt; [broker A, broker B]，只有本地新增 topic 时才需要更新路由表，比如又有其他客户端在 broker A 上订阅了 &#x2F;topics&#x2F;#，全局路由表不需要更新。当收到客户端的 publish 消息时，先查找路由表，找出所有对该消息对应主题感兴趣的 broker，将该消息发往所有感兴趣 broker，消息到达每台 broker 后，由其自己查找本地订阅树，转发到所有订阅了该主题的客户端，保证在不同 broker 上订阅相同主题的客户端都能收到该消息。全局主题树用于加速路由的查找。</p>
-<p>目前的想法是先不考虑消息的持久化，publish 消息只存在于 broker 内存。但是路由表，全局主题树需要持久化，便于 broker 宕机恢复，而且需要 broker 之间保持一致性 (目前方案采用最终一致性)。初步暂定方案如下：</p>
+<p>目前的想法是先不考虑消息的持久化，publish 消息只存在于 broker 内存。但是路由表，全局主题树需要持久化，便于 broker 宕机恢复，而且需要 broker 之间保持一致性 (最终一致性)。初步暂定方案如下：</p>
 <ul>
 <li><p><strong>集群成员发现</strong></p>
 <p>使用 etcd 来实现集群节点之间自动发现，指定一个共享的 prefix，例如 &#x2F;members&#x2F;online，当一个 broker 想要加入集群时(设 broker name 为 broker1)，它先调用 put 接口，创建一个 &#x2F;members&#x2F;online&#x2F;broker1 –&gt; broker1 IP 的 key value pair，再调用 watch 接口，监听 &#x2F;members&#x2F;online 这个 prefix。这里需要加分布式锁，保证 put 和 watch 之间没有其他 broker 的 put。当集群中已有的 broker 监听到  &#x2F;members&#x2F;online 下的 put 事件时，它需要主动与新增的 broker 建立 tcp 连接。这样在正常情况下集群间的 broker 两两之间都有 tcp 连接。每个 broker 对应的 key 与一个 lease 绑定，定期续约，相当于 broker 与 etcd 之间的心跳维持。</p>
 <p><img src="/pic/tinyMQTT-%E9%9B%86%E7%BE%A4%E6%96%B9%E5%BC%8F%E7%9A%84%E6%80%9D%E8%80%83/p1.jpg" alt="p1"></p>
 </li>
 <li><p><strong>订阅消息的复制</strong></p>
-<p>订阅消息我打算采用类似无主复制的方式，但和一般的无主复制不同，当一个 broker 上新增 topic 时，由它自己负责将这一路由表更新请求广播给其他所有 broker，其他 broker 收到后更新自己的路由表。当然这样会导致不同 broker 更新路由表的顺序不一致，但在这一特定场景下似乎并不重要，比如 broker1 的路由表中 &#x2F;topic 一项下先添加 broker2，后添加 broker3，而 broker5 的路由表中 &#x2F;topic 一项下先添加 broker3，后添加 broker2，效果都是一样的，因为路由表的每一项对应的是个 node 集合，是顺序无关的。所以这里的最终一致性其实指的是所有 broker 的路由表中都有相同的项，每项下都包含相同的 node 集合，集合中的顺序无所谓。所以要实现路由表的最终一致性，只需要每个 broker 都执行过来自其他 broker 的路由表更新请求即可。</p>
+<p>订阅消息我打算采用类似无主复制的方式，但和一般的无主复制不同，当一个 broker 上新增 topic 时，由它自己负责将这一路由表更新请求广播给其他所有 broker，其他 broker 收到后更新自己的路由表。当然这样会导致不同 broker 更新路由表不是全序的，但在这一特定场景下似乎并不重要，比如 broker1 的路由表中 &#x2F;topic 一项下先添加 broker2，后添加 broker3，而 broker5 的路由表中 &#x2F;topic 一项下先添加 broker3，后添加 broker2，效果都是一样的，因为路由表的每一项对应的是个 node 集合，是顺序无关的。所以这里的最终一致性其实指的是所有 broker 的路由表中都有相同的项，每项下都包含相同的 node 集合，集合中的顺序无所谓。所以要实现路由表的最终一致性，只需要每个 broker 都执行过来自其他 broker 的路由表更新请求即可。</p>
 </li>
 <li><p><strong>如何保证最终一致性</strong></p>
 <p>每个 broker 维护一个路由表的版本向量，有 N 个节点版本向量就是 N 维。比如上图每个 broker 初始版本向量都是 [0, 0, 0, 0, 0]。这里把广播路由表更新请求的那个 broker 称为路由更新的发起者，假设客户端在 broker1 上进行订阅，使得 broker1 上产生了新的 topic，broker1 广播路由表更新，那么 broker1 就是本次更新的发起者。当一个 broker 发起更新时，它首先将版本向量中自己对应的那一维 + 1，将其连带消息广播出去，此外还要在本地的 update_record 中记录此次操作，大概这样：</p>
