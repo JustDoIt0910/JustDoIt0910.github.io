@@ -13,22 +13,22 @@
 <meta property="og:site_name" content="Welcome to ZR&#39;s blog">
 <meta property="og:description" content="Sorting &amp; Aggregation Algorithms执行计划 (query plan)一条 SQL 查询语句首先被解析成抽象语法树，接着构建出对应的执行计划树(query plan tree)或 DAG。一个执行计划树的叶子节点对应底层的数据访问接口(access method)，包括通过索引查询或者直接扫描 table 本身等。叶节点将获取的数据传递给上层的节点(operat">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p1.png">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p2.png">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p3.png">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p4.png">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p5.png">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p6.jpg">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p7.jpg">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p8.jpg">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p9.jpg">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p10.jpg">
-<meta property="og:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p11.jpg">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p1.png">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p2.png">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p3.png">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p4.png">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p5.png">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p6.jpg">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p7.jpg">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p8.jpg">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p9.jpg">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p10.jpg">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p11.jpg">
 <meta property="article:published_time" content="2023-10-12T11:37:27.000Z">
-<meta property="article:modified_time" content="2023-11-18T10:07:24.549Z">
+<meta property="article:modified_time" content="2023-11-18T10:15:40.106Z">
 <meta property="article:author" content="ZR">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="d:\GithubBlog\source\pic\cmu15445-lecture10%E7%AC%94%E8%AE%B0\p1.png">
+<meta name="twitter:image" content="http://example.com/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p1.png">
     
     
       
@@ -172,7 +172,7 @@
 
   <div class="content e-content" itemprop="articleBody">
     <h2 id="Sorting-Aggregation-Algorithms"><a href="#Sorting-Aggregation-Algorithms" class="headerlink" title="Sorting &amp; Aggregation Algorithms"></a>Sorting &amp; Aggregation Algorithms</h2><h3 id="执行计划-query-plan"><a href="#执行计划-query-plan" class="headerlink" title="执行计划 (query plan)"></a>执行计划 (query plan)</h3><p>一条 SQL 查询语句首先被解析成抽象语法树，接着构建出对应的执行计划树(query plan tree)或 DAG。一个执行计划树的叶子节点对应底层的数据访问接口(access method)，包括通过索引查询或者直接扫描 table 本身等。叶节点将获取的数据传递给上层的节点(operator)，每个 operator 对数据进行处理后继续向上传递，直到根节点，将最终结果返回给查询者。数据库系统需要根据一条 SQL 语句，生成最优的执行计划，因为 SQL 只是表明了“我想要满足何种条件的数据”，而数据库要找到最优的执行方式。<strong>优化方式大体分为两种：一是选择合适的算法，二是对 query plan 进行重构，比如将 select operator 排在 join operator 之前(谓词下推)</strong></p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p1.png" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p1.png" alt="p1"></p>
 <p>此外，对于面向磁盘的数据库来说，我们不能假设查询结果能够完全放入内存中，需要借助 buffer pool 来保存中间结果。所以衡量一个算法优劣的主要标准不再是以往的时间复杂度，而是 IO 的频次。<strong>一个时间复杂度较高，但大多数是 sequential I&#x2F;O 的算法要优于另一个时间复杂度较低，但多数是 random I&#x2F;O 的算法。</strong></p>
 <h3 id="排序-Sorting"><a href="#排序-Sorting" class="headerlink" title="排序(Sorting)"></a>排序(Sorting)</h3><p>关系模型中数据是无序的，然而有不同的场景需要进行排序</p>
 <ul>
@@ -181,19 +181,19 @@
 </ul>
 <p>如果数据可以全部塞进内存，那么直接用标准的快排之类的算法就好了，否则就需要考虑磁盘 I&#x2F;O 的代价，普通的内存排序算法带来的 random I&#x2F;O 是无法接受的。</p>
 <h4 id="Top-N-heap-sort"><a href="#Top-N-heap-sort" class="headerlink" title="Top-N heap sort"></a>Top-N heap sort</h4><p>当遇到 order by + limit N 的查询时，数据库不需要将所有数据全部排序。此时最好的情况是当内存装得下 N 个元素时，可以在内存维护一个有序的优先队列(课件里是这么写的，感觉这里的 heap 不是传统的堆的定义，标准的堆只要求根节点大于左右子树，不要求全局有序，这里是全局有序的)。当新插入元素大于队头时，就插入到队头位置，否则插入到其应处的位置，队列满时队尾出队。当所有数据都插入一遍以后，留在队列中的即为 top N。</p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p2.png" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p2.png" alt="p1"></p>
 <h4 id="External-Merge-Sort"><a href="#External-Merge-Sort" class="headerlink" title="External Merge Sort"></a>External Merge Sort</h4><p>sorted runs 的概念：</p>
 <p>一个 sorted run(归并段) 就是一个有序的 key&#x2F;value pair 的列表。突然想到 leveldb 中也有 sorted run 这个概念，看来是一个外部归并排序中的专用概念了。这里的 key 很简单，就是要排序的属性(列)，value 有两种选择：一是保存整个 tuple 的内容(早物化)，一种是只保存对应 tuple 的 record id，直到最后一刻才去磁盘取对应的内容(晚物化)。前者优点是，当要返回数据给客户端时， tuple 的内容已经在内存中了，不用再去磁盘中取，缺点是在排序过程中，可能要将一个 tuple 内容从一个 sorted run 拷贝到另一个 sorted run，导致某一时刻一个 tuple 的内容存在多个副本。后者优点是几乎没有拷贝的开销，但是最终还是要去磁盘取 tuple，列数据库中用的比较多。另外早物化可以通过提前进行 project，只在 value 中保留需要的数据。 </p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p3.png" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p3.png" alt="p1"></p>
 <p>外部归并排序的思想是将所有要排序的数据分成多个 runs，分别对其排序，形成多个 sorted runs，即归并段，然后经过多轮合并，将小归并段合成大归并段。整个过程可以总结成两个阶段：</p>
 <ul>
 <li>排序阶段：该阶段负责创建归并段，每个归并段包含全体数据的一部分，并且归并段内部是排好序的</li>
 <li>合并阶段：归并段进行合并，生成更大的归并段</li>
 </ul>
 <h4 id="2-Way-External-Merge-Sort"><a href="#2-Way-External-Merge-Sort" class="headerlink" title="2-Way External Merge Sort"></a>2-Way External Merge Sort</h4><p>2路归并是指在合并阶段的每一轮中将2个归并段合并。设数据总共有 N page 大小，buffer pool 的容量是 B 个 page。在排序阶段(pass 0)中，将每个 page 读入 buffer pool，排好序后输出，这样创建出 N 个 1 page 大小的归并段：</p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p4.png" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p4.png" alt="p1"></p>
 <p>接下来在合并阶段的每一轮(pass)中，选取2个归并段作为输入，用归并算法合成一个更大的归并段。所以2路归并只需要B &gt;&#x3D; 3 即可(每一轮归并中2个 page 用作输入，1个 page 用作输出)。<strong>注意，无论输入的归并段大小有多大，一个归并段只需要1个 buffer pool 中的 page，因为归并算法中2个归并段中的 cursor 是只需要正向移动，不会回溯的，当处理完一个归并段中的1个 page，只需要清空 buffer pool 的这个 page，读入该归并段中的下一个 page 即可。同理，不论输出段有多大，也只需要1个 buffer pool page，当其写满以后溢出(spill)到磁盘就可以清空以写下一个 page 的内容了。</strong></p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p5.png" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p5.png" alt="p1"></p>
 <p>每一轮合并中归并段个数变为上一轮的 1&#x2F;2，归并段大小变为上一轮的2倍，所以有如下公式：</p>
 <ul>
 <li><strong>需要的总轮数(趟数)  # of passes &#x3D; 1 + ⌈ log<sub>2</sub>N ⌉</strong>        (1 轮用于生成归并段，⌈ log<sub>2</sub>N ⌉ 轮用于合并)</li>
@@ -212,16 +212,16 @@
 <li><strong>total I&#x2F;O cost &#x3D; 2N * (# of passes)</strong></li>
 </ul>
 <h4 id="使用-B-Tree-index-帮助排序"><a href="#使用-B-Tree-index-帮助排序" class="headerlink" title="使用 B+ Tree index 帮助排序"></a>使用 B+ Tree index 帮助排序</h4><p>有时如果要排序的属性上已经建立了索引，那么可以考虑直接遍历索引。如果是聚集索引，也就是 B+ Tree 索引中的逻辑顺序和 page 在磁盘上的物理顺序相同，直接遍历索引是很方便的，因为相当于顺序 I&#x2F;O：</p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p6.jpg" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p6.jpg" alt="p1"></p>
 <p>如果是非聚集索引，遍历索引就糟糕透顶了，因为要跟随 B+ Tree 叶节点中的 record id 去找对应的 page，而这些 page 物理顺序和B+ Tree 叶节点顺序不同，相当于 random I&#x2F;O 了：</p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p7.jpg" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p7.jpg" alt="p1"></p>
 <h3 id="聚合-Aggregations"><a href="#聚合-Aggregations" class="headerlink" title="聚合(Aggregations)"></a>聚合(Aggregations)</h3><p>通常有2种实现选择：</p>
 <ul>
 <li>Sorting</li>
 <li>Hashing</li>
 </ul>
 <h4 id="Sorting"><a href="#Sorting" class="headerlink" title="Sorting"></a>Sorting</h4><p>Sorting 是很直接的方法，比如下面的例子，将对应列排序，然后从头到尾扫描一遍，遇到与上一个 key 重复的就剔除掉：</p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p8.jpg" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p8.jpg" alt="p1"></p>
 <p>但是如果没有指定 order by，只希望去重，那这里的排序工作就显得冗余了，可以考虑 Hashing</p>
 <h4 id="Hashing-Aggregations"><a href="#Hashing-Aggregations" class="headerlink" title="Hashing Aggregations"></a>Hashing Aggregations</h4><p>最简单的方式就是在内存中维护一个临时的 Hash Table，遍历所有数据，对于每条 record，到 Hash Table 中查看其是否存在，根据不同的聚合类型进行不同的操作，比如是 DISTINCT 就抛弃重复的，是 GROUP BY 就执行对应的聚合计算。问题在于当所有数据不能全塞进内存的时候怎么办。</p>
 <h4 id="External-Hasing-Aggregate"><a href="#External-Hasing-Aggregate" class="headerlink" title="External Hasing Aggregate"></a>External Hasing Aggregate</h4><p>基本思想是分两个阶段：</p>
@@ -230,10 +230,10 @@
 <li>阶段二：将各个分区依次调入内存，将分区中的数据插入一个内存 Hash Table 中，如果 Hash Table 满了，就将其丢弃并创建一个新的即可。</li>
 </ul>
 <p>阶段一如下：使用哈希函数 h1，根据目标的 hash key 将 tuple 分割到磁盘中的不同分区，使得所有匹配的 tuple 放在同一个分区中。一个 partition 应该是能够全部放入内存缓冲区的，当缓冲区满会将分区溢出(spill)到磁盘上。</p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p9.jpg" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p9.jpg" alt="p1"></p>
 <p>阶段二如下：对磁盘上每个 partition，将其读入内存，使用第二个哈希函数h2，建立一个内存 Hash Table，把匹配的 tuple 聚合在一起。此外，Hash Table 中可以保存 GroupByKey -&gt; RunningValue 的配对，以计算聚合。RunningValue的内容取决于聚合函数。当向 Hash Table 中插入一个新 tuple 时，如果 Hash Table 中已有对应的 GroupByKey，那么就使用聚合函数更新 RunningValue，否则就插入一个新的 GroupByKey→RunningValue 对。</p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p10.jpg" alt="p1"></p>
-<p><img src="D:\GithubBlog\source\pic\cmu15445-lecture10笔记\p11.jpg" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p10.jpg" alt="p1"></p>
+<p><img src="/pic/cmu15445-lecture10%E7%AC%94%E8%AE%B0/p11.jpg" alt="p1"></p>
 
   </div>
 </article>
