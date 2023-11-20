@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="Parallel Query Execution这节课比较偏理论，讲的是请求的并行执行方式，简单记录一下。首先要区分 Parallel DBMS 和 Distributed DBMS，前者的资源和组件之间的物理距离是很近的，且它们之间的通信是快速可靠的，比如一台机器上的多个进程或线程；后者的资源之间距离远，比如位于跨地区的不同机房，它们之间通信较慢，且不可靠(即使使用 TCP)。这节课专注于 Pa">
+<meta property="og:type" content="article">
+<meta property="og:title" content="cmu15445-lecture13笔记">
+<meta property="og:url" content="http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Welcome to ZR&#39;s blog">
+<meta property="og:description" content="Parallel Query Execution这节课比较偏理论，讲的是请求的并行执行方式，简单记录一下。首先要区分 Parallel DBMS 和 Distributed DBMS，前者的资源和组件之间的物理距离是很近的，且它们之间的通信是快速可靠的，比如一台机器上的多个进程或线程；后者的资源之间距离远，比如位于跨地区的不同机房，它们之间通信较慢，且不可靠(即使使用 TCP)。这节课专注于 Pa">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture13%E7%AC%94%E8%AE%B0/p1.jpg">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture13%E7%AC%94%E8%AE%B0/p2.jpg">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture13%E7%AC%94%E8%AE%B0/p3.jpg">
+<meta property="og:image" content="http://example.com/pic/cmu15445-lecture13%E7%AC%94%E8%AE%B0/p4.jpg">
+<meta property="article:published_time" content="2023-10-18T04:26:28.000Z">
+<meta property="article:modified_time" content="2023-11-20T06:39:33.244Z">
+<meta property="article:author" content="ZR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/pic/cmu15445-lecture13%E7%AC%94%E8%AE%B0/p1.jpg">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>cmu15445-lecture13笔记</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2023/10/27/unordered_set%E5%92%8Cunordered_map%E8%87%AA%E5%AE%9A%E4%B9%89%E7%B1%BB%E5%9E%8B/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/10/16/cmu15445-lecture12%E7%AC%94%E8%AE%B0/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&text=cmu15445-lecture13笔记"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&title=cmu15445-lecture13笔记"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&is_video=false&description=cmu15445-lecture13笔记"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=cmu15445-lecture13笔记&body=Check out this article: http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&title=cmu15445-lecture13笔记"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&title=cmu15445-lecture13笔记"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&title=cmu15445-lecture13笔记"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&title=cmu15445-lecture13笔记"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&name=cmu15445-lecture13笔记&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&t=cmu15445-lecture13笔记"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Parallel-Query-Execution"><span class="toc-number">1.</span> <span class="toc-text">Parallel Query Execution</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Process-Model"><span class="toc-number">1.1.</span> <span class="toc-text">Process Model</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Process-Per-Worker"><span class="toc-number">1.1.1.</span> <span class="toc-text">Process Per Worker</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Thread-Per-Worker"><span class="toc-number">1.1.2.</span> <span class="toc-text">Thread Per Worker</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Embedded"><span class="toc-number">1.1.3.</span> <span class="toc-text">Embedded</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Inter-Query-Parallelism-%E5%92%8C-Intra-Query-Parallelism"><span class="toc-number">1.2.</span> <span class="toc-text">Inter-Query Parallelism 和 Intra-Query Parallelism</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Intra-Operator"><span class="toc-number">1.2.1.</span> <span class="toc-text">Intra-Operator</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Inter-Operator"><span class="toc-number">1.2.2.</span> <span class="toc-text">Inter-Operator</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#I-O-Parallelism"><span class="toc-number">1.3.</span> <span class="toc-text">I&#x2F;O Parallelism</span></a></li></ol></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        cmu15445-lecture13笔记
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">ZR</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-10-18T04:26:28.000Z" class="dt-published" itemprop="datePublished">2023-10-18</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/cmu15445/">cmu15445</a>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h2 id="Parallel-Query-Execution"><a href="#Parallel-Query-Execution" class="headerlink" title="Parallel Query Execution"></a>Parallel Query Execution</h2><p>这节课比较偏理论，讲的是请求的并行执行方式，简单记录一下。首先要区分 Parallel DBMS 和 Distributed DBMS，前者的资源和组件之间的物理距离是很近的，且它们之间的通信是快速可靠的，比如一台机器上的多个进程或线程；后者的资源之间距离远，比如位于跨地区的不同机房，它们之间通信较慢，且不可靠(即使使用 TCP)。这节课专注于 Parallel DBMS。</p>
+<h3 id="Process-Model"><a href="#Process-Model" class="headerlink" title="Process Model"></a>Process Model</h3><p>worker 是指一个负责执行执行具体的任务并返回结果的单位。Process Model 是数据库的处理模型，类似服务器的并发模型，有 Process Per Worker、Thread Per Worker 和 embedded 三种。</p>
+<h4 id="Process-Per-Worker"><a href="#Process-Per-Worker" class="headerlink" title="Process Per Worker"></a>Process Per Worker</h4><p>多进程模型，每个 worker 工作在一个进程中，客户端与 dispatcher 连接，dispatcher 负责分配具体的任务给 worker，使用共享内存来共享全局的数据结构(比如 buffer pool)。 好处是一个 worker 崩溃不会使整个系统崩溃。此外还因为不同操作系统的线程 API 可能不同，但进程 API 却相对统一(fork)，所以可移植性好一些。</p>
+<h4 id="Thread-Per-Worker"><a href="#Thread-Per-Worker" class="headerlink" title="Thread Per Worker"></a>Thread Per Worker</h4><p>多线程模型，一个 worker crash 会导致系统退出。此外还提到了 SQL Server 一个非常有意思的技术——SQL OS，是指将 OS 作了一层抽象，DBMS 不直接使用原生 OS 的系统调用，而是通过 SQL OS 层与操作系统交互。更重要的是它支持非抢占式的线程调度方式，线程需要在用尽时间片后主动 yield() 返回 scheduler，感觉很像协程啊。这样数据库的 scheduler 就有了完全的控制权，可以决定 worker 的执行顺序，而不是依赖操作系统调度。</p>
+<h4 id="Embedded"><a href="#Embedded" class="headerlink" title="Embedded"></a>Embedded</h4><p>就是指本身不是一个独立的服务，而是以库的形式嵌入其他应用程序的数据库，像 sqlite、leveldb。它们的并发模型取决于应用程序如何使用。</p>
+<h3 id="Inter-Query-Parallelism-和-Intra-Query-Parallelism"><a href="#Inter-Query-Parallelism-和-Intra-Query-Parallelism" class="headerlink" title="Inter-Query Parallelism 和 Intra-Query Parallelism"></a>Inter-Query Parallelism 和 Intra-Query Parallelism</h3><p>Inter-Query Parallelism 是指同时执行多条不同的 query，如果同时执行多条会改变数据库状态的更新 query，会涉及到并发控制的问题(lecture 15)；Intra-Query Parallelism 是指并行地执行一条 query 包含的不同操作，比如下面这个并行 Partitioned Hash Join，在完成分区以后，可以把每个分区内的 Join 分配给多个 worker：</p>
+<p><img src="/pic/cmu15445-lecture13%E7%AC%94%E8%AE%B0/p1.jpg" alt="p1"></p>
+<p>Intra-Query Parallelism 又分为三种方式：</p>
+<ul>
+<li>Intra-Operator</li>
+<li>Inter-Operator</li>
+<li>Bushy</li>
+</ul>
+<h4 id="Intra-Operator"><a href="#Intra-Operator" class="headerlink" title="Intra-Operator"></a>Intra-Operator</h4><p>Intra-Operator 是对 operator 进行横向拆分，拆分出的多个 operator 进行的是相同的操作，只是每个负责数据的一个子集。(Decompose operators into independent fragments that perform the same function on different subsets of data.) <strong>为此还需要一种特殊的 exchange operator，主要有三种功能：收集多个并行 worker 的工作结果(Gather)、将输入数据分派给多个 worker 进行处理(Distribute)、将多个输入汇总，再分配给多个 worker(Repartition)</strong></p>
+<p><img src="/pic/cmu15445-lecture13%E7%AC%94%E8%AE%B0/p2.jpg" alt="p2"></p>
+<p>在这个 Hash Join 中，先分配三个 worker 并行地为外表建立 Hash Table，结果由 exchange operator 汇总，再分配三个 worker 并行地 probe：</p>
+<p><img src="/pic/cmu15445-lecture13%E7%AC%94%E8%AE%B0/p3.jpg" alt="p3"></p>
+<h4 id="Inter-Operator"><a href="#Inter-Operator" class="headerlink" title="Inter-Operator"></a>Inter-Operator</h4><p>Inter-Operator 是将一个 query 纵向分割，把不同的操作分配给不同的 operator，每个 operator 不断接收输入并产生输出，这种并行是发生在不同层的 operator 之间的，如果下层 operator 没有向上层提供数据，上层 operator 将会阻塞等待。</p>
+<p><img src="/pic/cmu15445-lecture13%E7%AC%94%E8%AE%B0/p4.jpg" alt="p4"></p>
+<p>Bushy 就是以上两种并行方式的混合。</p>
+<h3 id="I-O-Parallelism"><a href="#I-O-Parallelism" class="headerlink" title="I&#x2F;O Parallelism"></a>I&#x2F;O Parallelism</h3><p>当数据库系统的瓶颈不在 CPU 而是磁盘时，再多的多核优化都是浪费的，需要进行 I&#x2F;O 并行。可以通过组建 RAID 的方式将数据分散到多个存储设备上，而数据库本身对此应该是无感知的。</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a href="/categories/">Categories</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Parallel-Query-Execution"><span class="toc-number">1.</span> <span class="toc-text">Parallel Query Execution</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Process-Model"><span class="toc-number">1.1.</span> <span class="toc-text">Process Model</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Process-Per-Worker"><span class="toc-number">1.1.1.</span> <span class="toc-text">Process Per Worker</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Thread-Per-Worker"><span class="toc-number">1.1.2.</span> <span class="toc-text">Thread Per Worker</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Embedded"><span class="toc-number">1.1.3.</span> <span class="toc-text">Embedded</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Inter-Query-Parallelism-%E5%92%8C-Intra-Query-Parallelism"><span class="toc-number">1.2.</span> <span class="toc-text">Inter-Query Parallelism 和 Intra-Query Parallelism</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Intra-Operator"><span class="toc-number">1.2.1.</span> <span class="toc-text">Intra-Operator</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Inter-Operator"><span class="toc-number">1.2.2.</span> <span class="toc-text">Inter-Operator</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#I-O-Parallelism"><span class="toc-number">1.3.</span> <span class="toc-text">I&#x2F;O Parallelism</span></a></li></ol></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&text=cmu15445-lecture13笔记"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&title=cmu15445-lecture13笔记"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&is_video=false&description=cmu15445-lecture13笔记"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=cmu15445-lecture13笔记&body=Check out this article: http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&title=cmu15445-lecture13笔记"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&title=cmu15445-lecture13笔记"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&title=cmu15445-lecture13笔记"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&title=cmu15445-lecture13笔记"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&name=cmu15445-lecture13笔记&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2023/10/18/cmu15445-lecture13%E7%AC%94%E8%AE%B0/&t=cmu15445-lecture13笔记"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2023
+    ZR
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a href="/categories/">Categories</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/JustDoIt0910">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
